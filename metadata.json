@@ -1,0 +1,6 @@
+{
+  "name": "ZavalaVoz",
+  "description": "Estúdio minimalista de conversão de texto para áudio MP3 e simulador oral da dissertação sobre a produção de mandioca no Distrito de Zavala (Yolanda Tamele, UEM ESUDER).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
