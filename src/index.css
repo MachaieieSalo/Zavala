@@ -1,32 +1,134 @@
 @import "tailwindcss";
 
+@theme {
+  /* ZAVALAVOZ — The Living Manuscript: Core Palette Tokens */
+  --color-bg-canvas: #F4EFE6;
+  --color-bg-surface: #FCFAF6;
+  --color-bg-subtle: #EAE2D2;
+
+  --color-text-primary: #1A2417;
+  --color-text-muted: #4F5C48;
+
+  --color-border-line: #D9CDAF;
+
+  --color-accent-crop: #4A6B3E;
+  --color-accent-crop-dark: #354D2C;
+  --color-accent-shock: #A8531E;
+  --color-accent-focus: #2A3A24;
+
+  /* Backward-compatible token aliases for transitional component code */
+  --color-sand: #F4EFE6;
+  --color-surface: #FCFAF6;
+  --color-subtle: #EAE2D2;
+  --color-earth: #1A2417;
+  --color-earth-muted: #4F5C48;
+  --color-cassava: #4A6B3E;
+  --color-cassava-dark: #354D2C;
+  --color-clay: #A8531E;
+  --color-border-warm: #D9CDAF;
+
+  /* Typography scale */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Restrained Radius Scale (anti-slop hierarchy: 2px, 4px, 6px, 8px) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-display: 'Outfit', sans-serif;
+    --bg-canvas: #F4EFE6;          /* Areia suave para o canvas geral */
+    --bg-surface: #FCFAF6;         /* Papel marfim/superfície de trabalho */
+    --bg-subtle: #EAE2D2;          /* Fundo secundário neutro para divisões e tabelas */
+    --text-primary: #1A2417;       /* Verde-floresta profundo (contraste > 10:1) */
+    --text-muted: #4F5C48;         /* Verde acinzentado escurecido (contraste > 4.8:1) */
+    --border-line: #D9CDAF;        /* Linhas editoriais de 1px */
+    --accent-crop: #4A6B3E;        /* Verde vegetal da mandioca / dados de colheita */
+    --accent-crop-dark: #354D2C;
+    --accent-shock: #A8531E;       /* Argila/terracota para choques climáticos e alertas */
+    --accent-focus: #2A3A24;       /* Foco nítido e autoritário */
+
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-display: 'Fraunces', Georgia, serif;
     --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * {
+    border-color: var(--border-line);
+  }
+
+  ::selection {
+    background-color: rgba(74, 107, 62, 0.22);
+    color: #1A2417;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  /* Universal accessible keyboard focus ring */
+  :focus-visible {
+    outline: 2px solid var(--accent-focus);
+    outline-offset: 2px;
   }
 }
 
-/* Custom soundwave pulse animations */
-@keyframes soundwave {
-  0%, 100% {
+/* Layer utilities for academic manuscript layout and elevation */
+@layer utilities {
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Flat by default: only floating modals/popovers use elevation */
+  .shadow-academic-modal {
+    box-shadow: 0 12px 32px -4px rgba(26, 36, 23, 0.16), 0 4px 12px -2px rgba(26, 36, 23, 0.08);
+  }
+
+  .shadow-academic-popover {
+    box-shadow: 0 6px 18px -2px rgba(26, 36, 23, 0.12), 0 2px 6px -1px rgba(26, 36, 23, 0.06);
+  }
+
+  /* Academic refined scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
     height: 6px;
   }
+  ::-webkit-scrollbar-track {
+    background: #F4EFE6;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D9CDAF;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4F5C48;
+  }
+}
+
+/* Hero soundwave pulse animations (preserved for functional backwards-compatibility until Phase 5) */
+@keyframes soundwave {
+  0%, 100% {
+    height: 10px;
+    opacity: 0.45;
+  }
   50% {
-    height: 28px;
+    height: 52px;
+    opacity: 1;
   }
 }
 

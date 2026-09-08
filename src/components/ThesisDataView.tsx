@@ -70,19 +70,19 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
+    <div className="bg-[#FFFDF8] border border-[#DDD0B4] rounded-md overflow-hidden text-[#1F2A1A]">
       {/* Tab Header */}
-      <div className="p-4 sm:p-5 border-b border-zinc-100 bg-zinc-50/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 border-b border-[#DDD0B4] bg-[#F2E9D8]/30 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800">
+            <span className="p-1.5 rounded-md bg-[#5B7B4F]/15 text-[#3F5837]">
               <FileSpreadsheet className="w-4 h-4" />
             </span>
-            <h3 className="text-base font-bold text-zinc-900 tracking-tight">
+            <h3 className="text-base font-bold text-[#1F2A1A] font-display">
               {isPt ? 'Dados do Modelo Zavala Mandioca (1994–2024)' : 'Zavala Cassava Model Data (1994–2024)'}
             </h3>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-[#5C6B52] mt-1">
             {isPt
               ? 'Reconstituição de 31 anos baseada em dados primários SDAE Zavala, World Bank (Jobs WP 31), PROSUL e Choques Climáticos (Lobell & Burke, FEWS NET).'
               : '31-year reconstruction grounded in primary records from SDAE Zavala, World Bank (Jobs WP 31), PROSUL, and climate shock modeling (Lobell & Burke, FEWS NET).'}
@@ -90,14 +90,14 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto bg-zinc-100 p-1 rounded-xl text-xs font-medium border border-zinc-200 self-start lg:self-auto scrollbar-none">
+        <div className="flex items-center gap-1 overflow-x-auto bg-[#FFFDF8] p-1 rounded-md text-xs font-medium border border-[#DDD0B4] self-start lg:self-auto scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab('serie_31')}
-            className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'serie_31'
-                ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-[#1F2A1A] text-white font-bold'
+                : 'text-[#5C6B52] hover:text-[#1F2A1A]'
             }`}
           >
             {isPt ? 'Série 31 Anos (B)' : '31-Year Series (B)'}
@@ -105,10 +105,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('choques_perdas')}
-            className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'choques_perdas'
-                ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-[#1F2A1A] text-white font-bold'
+                : 'text-[#5C6B52] hover:text-[#1F2A1A]'
             }`}
           >
             {isPt ? 'Choques & Perdas (D)' : 'Shocks & Losses (D)'}
@@ -116,10 +116,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('pressupostos')}
-            className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'pressupostos'
-                ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-[#1F2A1A] text-white font-bold'
+                : 'text-[#5C6B52] hover:text-[#1F2A1A]'
             }`}
           >
             {isPt ? 'Pressupostos (A)' : 'Assumptions (A)'}
@@ -127,10 +127,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('metodologia')}
-            className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'metodologia'
-                ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-[#1F2A1A] text-white font-bold'
+                : 'text-[#5C6B52] hover:text-[#1F2A1A]'
             }`}
           >
             {isPt ? 'Metodologia (E)' : 'Methodology (E)'}
@@ -138,10 +138,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('bairros')}
-            className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'bairros'
-                ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-[#1F2A1A] text-white font-bold'
+                : 'text-[#5C6B52] hover:text-[#1F2A1A]'
             }`}
           >
             {isPt ? '11 Bairros' : '11 Villages'}
@@ -154,48 +154,48 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         {/* TAB 1: SÉRIE 31 ANOS */}
         {activeTab === 'serie_31' && (
           <div className="space-y-4">
-            {/* Top Stats Banner */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+            {/* Top Stats Strip - Flat divider grid without card boxes */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 border border-[#DDD0B4] bg-[#FFFDF8] divide-y sm:divide-y-0 sm:divide-x divide-[#DDD0B4] rounded-md">
+              <div className="p-3.5 space-y-0.5">
+                <span className="text-xs font-semibold text-[#5C6B52]">
                   {isPt ? 'Média da Série (31 Anos)' : 'Series Average (31 Yrs)'}
                 </span>
-                <p className="text-lg font-bold text-zinc-900 mt-0.5">115.333 t</p>
-                <span className="text-[10px] text-zinc-400">{isPt ? '1994 a 2024' : '1994 to 2024'}</span>
+                <p className="text-lg font-bold text-[#1F2A1A] font-mono">115.333 t</p>
+                <span className="text-[10px] text-[#5C6B52]/70">{isPt ? '1994 a 2024' : '1994 to 2024'}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+              <div className="p-3.5 space-y-0.5">
+                <span className="text-xs font-semibold text-[#5C6B52]">
                   {isPt ? 'Pico Histórico (2021)' : 'Historical Peak (2021)'}
                 </span>
-                <p className="text-lg font-bold text-emerald-800 mt-0.5">273.773 t</p>
-                <span className="text-[10px] text-emerald-600 font-medium">{isPt ? 'Variedades IIAM + SUSTENTA' : 'IIAM + SUSTENTA Var.'}</span>
+                <p className="text-lg font-bold text-[#3F5837] font-mono">273.773 t</p>
+                <span className="text-[10px] text-[#5B7B4F] font-medium">{isPt ? 'Variedades IIAM + SUSTENTA' : 'IIAM + SUSTENTA Var.'}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+              <div className="p-3.5 space-y-0.5">
+                <span className="text-xs font-semibold text-[#5C6B52]">
                   {isPt ? 'Menor Safra (Seca 2023)' : 'Lowest Yield (Drought 2023)'}
                 </span>
-                <p className="text-lg font-bold text-rose-700 mt-0.5">35.371 t</p>
-                <span className="text-[10px] text-rose-600 font-medium">{isPt ? 'Colapso El Niño (-87%)' : 'El Niño Collapse (-87%)'}</span>
+                <p className="text-lg font-bold text-[#B5651D] font-mono">35.371 t</p>
+                <span className="text-[10px] text-[#B5651D] font-medium">{isPt ? 'Colapso El Niño (-87%)' : 'El Niño Collapse (-87%)'}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200">
-                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+              <div className="p-3.5 space-y-0.5">
+                <span className="text-xs font-semibold text-[#5C6B52]">
                   {isPt ? 'Âncoras Primárias' : 'Primary Anchors'}
                 </span>
-                <p className="text-lg font-bold text-zinc-900 mt-0.5">8 {isPt ? 'Anos' : 'Years'}</p>
-                <span className="text-[10px] text-zinc-500">2017-2024 SDAE Zavala</span>
+                <p className="text-lg font-bold text-[#1F2A1A] font-mono">8 {isPt ? 'Anos' : 'Years'}</p>
+                <span className="text-[10px] text-[#5C6B52]">2017-2024 SDAE Zavala</span>
               </div>
             </div>
 
             {/* Filter & Column Toggle Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
               <div className="relative flex-1 max-w-sm">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#5C6B52]" />
                 <input
                   type="text"
                   value={filterQuery}
                   onChange={(e) => setFilterQuery(e.target.value)}
                   placeholder={isPt ? 'Filtrar por ano, status ou evento...' : 'Filter by year, status or shock...'}
-                  className="w-full pl-9 pr-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
+                  className="w-full pl-9 pr-3 py-1.5 bg-[#FFFDF8] border border-[#DDD0B4] rounded-md text-xs text-[#1F2A1A] placeholder-[#5C6B52]/70 focus:outline-none focus:border-[#5B7B4F]"
                 />
               </div>
 
@@ -203,13 +203,13 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAdvancedColumns(!showAdvancedColumns)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-all cursor-pointer ${
                     showAdvancedColumns
-                      ? 'bg-zinc-900 text-white border-zinc-900'
-                      : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-[#1F2A1A] text-white border-[#1F2A1A]'
+                      : 'bg-[#FFFDF8] text-[#1F2A1A] border-[#DDD0B4] hover:bg-[#F2E9D8]'
                   }`}
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#5B7B4F]" />
                   <span>
                     {showAdvancedColumns
                       ? isPt ? 'Ocultar Parâmetros' : 'Hide Parameters'
@@ -220,10 +220,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+            <div className="overflow-x-auto rounded-md border border-[#DDD0B4]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-zinc-50 text-zinc-500 font-mono text-[11px] border-b border-zinc-200">
+                  <tr className="bg-[#F2E9D8]/40 text-[#5C6B52] font-mono text-[11px] border-b border-[#DDD0B4]">
                     <th className="p-3">Ano</th>
                     <th className="p-3">Status</th>
                     <th className="p-3 text-right">Área (ha)</th>
@@ -235,13 +235,13 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                       </>
                     )}
                     <th className="p-3 text-right">Rend. Efectivo</th>
-                    <th className="p-3 text-right font-bold text-zinc-800">Produção Final (t)</th>
+                    <th className="p-3 text-right font-bold text-[#1F2A1A]">Produção Final (t)</th>
                     <th className="p-3 text-right">Var. Anual</th>
                     <th className="p-3">Choque / Evento Documentado</th>
                     <th className="p-3 text-center">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-[#DDD0B4]/60">
                   {filteredSeries.map((row) => {
                     const isObserved = row.status === 'OBSERVADO (SDAE)';
                     const isHighlighted = highlightYear === row.year;
@@ -340,52 +340,52 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         {activeTab === 'choques_perdas' && (
           <div className="space-y-4">
             {/* Massive Shock Losses Banner */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950 space-y-2">
+            <div className="p-4 border-l-2 border-[#B5651D] border-y border-r border-[#DDD0B4] bg-[#F2E9D8]/30 text-[#1F2A1A] space-y-1.5 rounded-sm">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-rose-600" />
-                <h4 className="text-sm sm:text-base font-bold text-rose-900">
+                <AlertTriangle className="w-5 h-5 text-[#B5651D]" />
+                <h4 className="text-sm sm:text-base font-bold text-[#1F2A1A]">
                   Perdas Totais Cumulativas Estimadas (1994–2016): 547.224 Toneladas
                 </h4>
               </div>
-              <p className="text-xs text-rose-800 leading-relaxed">
+              <p className="text-xs text-[#5C6B52] leading-relaxed">
                 As perdas acumuladas provocadas por ciclones tropicais, secas de El Niño e inundações catastróficas totalizam mais de meio milhão de toneladas em 23 anos. O Ciclone Favio (2007) e a Seca Extrema de 2016 responderam sozinhos por mais de 206 mil toneladas de quebra física.
               </p>
             </div>
 
             {/* Shock Table */}
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+            <div className="overflow-x-auto rounded-md border border-[#DDD0B4]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-zinc-50 text-zinc-500 font-mono text-[11px] border-b border-zinc-200">
+                  <tr className="bg-[#F2E9D8]/40 text-[#5C6B52] font-mono text-[11px] border-b border-[#DDD0B4]">
                     <th className="p-3">Ano</th>
                     <th className="p-3">Evento Climático Extremo</th>
                     <th className="p-3 text-right">Tendência (t)</th>
                     <th className="p-3 text-right">Realizado (t)</th>
-                    <th className="p-3 text-right font-bold text-rose-700">Perda Líquida (t)</th>
+                    <th className="p-3 text-right font-bold text-[#B5651D]">Perda Líquida (t)</th>
                     <th className="p-3 text-right">Quebra (%)</th>
                     <th className="p-3">Fonte de Validação Externa</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-[#DDD0B4]/60">
                   {THESIS_CLIMATE_IMPACT_LOSSES.map((shock) => (
-                    <tr key={shock.year} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-3 font-mono font-bold text-zinc-900">{shock.year}</td>
-                      <td className="p-3 font-medium text-zinc-800">{shock.event}</td>
-                      <td className="p-3 text-right font-mono text-zinc-500">
+                    <tr key={shock.year} className="hover:bg-[#F2E9D8]/20 transition-colors">
+                      <td className="p-3 font-mono font-bold text-[#1F2A1A]">{shock.year}</td>
+                      <td className="p-3 font-medium text-[#1F2A1A]">{shock.event}</td>
+                      <td className="p-3 text-right font-mono text-[#5C6B52]">
                         {shock.trendProdTonnes.toLocaleString('pt-MZ')}
                       </td>
-                      <td className="p-3 text-right font-mono text-zinc-800 font-semibold">
+                      <td className="p-3 text-right font-mono text-[#1F2A1A] font-semibold">
                         {shock.actualProdTonnes.toLocaleString('pt-MZ')}
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-rose-700">
+                      <td className="p-3 text-right font-mono font-bold text-[#B5651D]">
                         {shock.lossTonnes > 0 ? `-${shock.lossTonnes.toLocaleString('pt-MZ')}` : `+${Math.abs(shock.lossTonnes).toLocaleString('pt-MZ')}`}
                       </td>
                       <td className="p-3 text-right font-mono font-bold">
-                        <span className={shock.lossPercent > 0 ? 'text-rose-600' : 'text-emerald-600'}>
+                        <span className={shock.lossPercent > 0 ? 'text-[#B5651D]' : 'text-[#3F5837]'}>
                           {shock.lossPercent > 0 ? `-${shock.lossPercent.toFixed(1)}%` : `+${Math.abs(shock.lossPercent).toFixed(1)}%`}
                         </span>
                       </td>
-                      <td className="p-3 text-zinc-500 text-[11px]">{shock.source}</td>
+                      <td className="p-3 text-[#5C6B52] text-[11px]">{shock.source}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -397,14 +397,14 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         {/* TAB 3: PRESSUPOSTOS (FOLHA A) */}
         {activeTab === 'pressupostos' && (
           <div className="space-y-4">
-            <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-600">
+            <div className="p-3.5 bg-[#F2E9D8]/30 border-l-2 border-[#5B7B4F] border-y border-r border-[#DDD0B4] text-xs text-[#5C6B52] rounded-sm">
               Estes parâmetros definem os valores de partida e as trajetórias do modelo determinístico calibrado na tese, ancorados na proporção de Zavala (~15% da província de Inhambane).
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+            <div className="overflow-x-auto rounded-md border border-[#DDD0B4]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-zinc-50 text-zinc-500 font-mono text-[11px] border-b border-zinc-200">
+                  <tr className="bg-[#F2E9D8]/40 text-[#5C6B52] font-mono text-[11px] border-b border-[#DDD0B4]">
                     <th className="p-3">Categoria</th>
                     <th className="p-3">Parâmetro</th>
                     <th className="p-3">Valor Adotado</th>
@@ -413,17 +413,17 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                     <th className="p-3">Justificativa Científica</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-[#DDD0B4]/60">
                   {THESIS_MODEL_ASSUMPTIONS.map((a) => (
-                    <tr key={a.id} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="p-3 font-semibold text-zinc-900">{a.category}</td>
-                      <td className="p-3 font-mono text-zinc-700">{a.parameter}</td>
-                      <td className="p-3 font-mono font-bold text-emerald-800">
+                    <tr key={a.id} className="hover:bg-[#F2E9D8]/20 transition-colors">
+                      <td className="p-3 font-semibold text-[#1F2A1A]">{a.category}</td>
+                      <td className="p-3 font-mono text-[#5C6B52]">{a.parameter}</td>
+                      <td className="p-3 font-mono font-bold text-[#3F5837]">
                         {a.value} {a.unit}
                       </td>
-                      <td className="p-3 font-mono text-zinc-500">{a.interval}</td>
-                      <td className="p-3 text-zinc-600 text-[11px]">{a.source}</td>
-                      <td className="p-3 text-zinc-500 text-[11px]">{a.notes}</td>
+                      <td className="p-3 font-mono text-[#5C6B52]">{a.interval}</td>
+                      <td className="p-3 text-[#5C6B52] text-[11px]">{a.source}</td>
+                      <td className="p-3 text-[#5C6B52]/80 text-[11px]">{a.notes}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -439,39 +439,39 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
               {THESIS_METHODOLOGY_LAYERS.map((layer) => (
                 <div
                   key={layer.layerNumber}
-                  className="p-5 rounded-2xl border border-zinc-200 bg-white shadow-xs space-y-3"
+                  className="p-4 border-l-2 border-[#5B7B4F] border-y border-r border-[#DDD0B4] bg-[#FFFDF8] rounded-sm space-y-2.5"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-zinc-900 text-white font-mono font-bold flex items-center justify-center text-xs">
+                    <span className="w-6 h-6 rounded bg-[#1F2A1A] text-white font-mono font-bold flex items-center justify-center text-xs">
                       {layer.layerNumber}
                     </span>
-                    <h4 className="text-sm sm:text-base font-bold text-zinc-900">
+                    <h4 className="text-sm sm:text-base font-bold text-[#1F2A1A]">
                       {layer.title}
                     </h4>
                   </div>
 
-                  <p className="text-xs font-semibold text-emerald-800">
+                  <p className="text-xs font-semibold text-[#3F5837]">
                     {layer.shortDesc}
                   </p>
 
-                  <ul className="space-y-1.5 text-xs text-zinc-600">
+                  <ul className="space-y-1.5 text-xs text-[#5C6B52]">
                     {layer.details.map((detail, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#5B7B4F] shrink-0 mt-0.5" />
                         <span>{detail}</span>
                       </li>
                     ))}
                   </ul>
 
-                  <div className="pt-2 border-t border-zinc-100">
-                    <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                  <div className="pt-2 border-t border-[#DDD0B4]/60">
+                    <span className="text-xs font-semibold text-[#1F2A1A]">
                       Referências Principais:
                     </span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {layer.keyReferences.map((ref, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-700 text-[11px] font-medium border border-zinc-200/60"
+                          className="px-2.5 py-1 rounded-md bg-[#F2E9D8]/50 text-[#1F2A1A] text-[11px] font-medium border border-[#DDD0B4]"
                         >
                           {ref}
                         </span>
@@ -487,14 +487,14 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         {/* TAB 5: 11 BAIRROS DE ZAVALA */}
         {activeTab === 'bairros' && (
           <div className="space-y-3">
-            <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-600">
+            <div className="p-3.5 bg-[#F2E9D8]/30 border-l-2 border-[#5B7B4F] border-y border-r border-[#DDD0B4] text-xs text-[#5C6B52] rounded-sm">
               Validação territorial com 11 bairros rurais de Zavala, abrangendo relevo costeiro, altitudes de 85m a 140m e solos predominantemente franco-arenosos.
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+            <div className="overflow-x-auto rounded-md border border-[#DDD0B4]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-zinc-50 text-zinc-500 font-mono text-[11px] border-b border-zinc-200">
+                  <tr className="bg-[#F2E9D8]/40 text-[#5C6B52] font-mono text-[11px] border-b border-[#DDD0B4]">
                     <th className="p-3">Bairro / Comunidade</th>
                     <th className="p-3">Posto Administrativo</th>
                     <th className="p-3 text-right">Altitude (SRTM)</th>
@@ -503,46 +503,46 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                     <th className="p-3">Risco Principal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  <tr className="hover:bg-zinc-50/80">
-                    <td className="p-3 font-semibold text-zinc-900">Quissico Sede</td>
-                    <td className="p-3 text-zinc-600">Quissico</td>
-                    <td className="p-3 text-right font-mono">118 m</td>
-                    <td className="p-3 text-zinc-600">Arenoso avermelhado profundo</td>
-                    <td className="p-3 text-zinc-600">Chigoma Mafia, Local doce</td>
-                    <td className="p-3 text-rose-600 font-medium">Seca severa e ventos marinhos</td>
+                <tbody className="divide-y divide-[#DDD0B4]/60">
+                  <tr className="hover:bg-[#F2E9D8]/20">
+                    <td className="p-3 font-semibold text-[#1F2A1A]">Quissico Sede</td>
+                    <td className="p-3 text-[#5C6B52]">Quissico</td>
+                    <td className="p-3 text-right font-mono text-[#1F2A1A]">118 m</td>
+                    <td className="p-3 text-[#5C6B52]">Arenoso avermelhado profundo</td>
+                    <td className="p-3 text-[#5C6B52]">Chigoma Mafia, Local doce</td>
+                    <td className="p-3 text-[#B5651D] font-medium">Seca severa e ventos marinhos</td>
                   </tr>
-                  <tr className="hover:bg-zinc-50/80">
-                    <td className="p-3 font-semibold text-zinc-900">Mahumane</td>
-                    <td className="p-3 text-zinc-600">Quissico</td>
-                    <td className="p-3 text-right font-mono">125 m</td>
-                    <td className="p-3 text-zinc-600">Franco-arenoso litorâneo</td>
-                    <td className="p-3 text-zinc-600">Mulaleia, Chinhembwe</td>
-                    <td className="p-3 text-rose-600 font-medium">Estiagem precoce e CBSD</td>
+                  <tr className="hover:bg-[#F2E9D8]/20">
+                    <td className="p-3 font-semibold text-[#1F2A1A]">Mahumane</td>
+                    <td className="p-3 text-[#5C6B52]">Quissico</td>
+                    <td className="p-3 text-right font-mono text-[#1F2A1A]">125 m</td>
+                    <td className="p-3 text-[#5C6B52]">Franco-arenoso litorâneo</td>
+                    <td className="p-3 text-[#5C6B52]">Mulaleia, Chinhembwe</td>
+                    <td className="p-3 text-[#B5651D] font-medium">Estiagem precoce e CBSD</td>
                   </tr>
-                  <tr className="hover:bg-zinc-50/80">
-                    <td className="p-3 font-semibold text-zinc-900">Zavalene</td>
-                    <td className="p-3 text-zinc-600">Quissico</td>
-                    <td className="p-3 text-right font-mono">122 m</td>
-                    <td className="p-3 text-zinc-600">Arenoso vermelho</td>
-                    <td className="p-3 text-zinc-600">Variedades IIAM melhoradas</td>
-                    <td className="p-3 text-rose-600 font-medium">Queda drástica no El Niño</td>
+                  <tr className="hover:bg-[#F2E9D8]/20">
+                    <td className="p-3 font-semibold text-[#1F2A1A]">Zavalene</td>
+                    <td className="p-3 text-[#5C6B52]">Quissico</td>
+                    <td className="p-3 text-right font-mono text-[#1F2A1A]">122 m</td>
+                    <td className="p-3 text-[#5C6B52]">Arenoso vermelho</td>
+                    <td className="p-3 text-[#5C6B52]">Variedades IIAM melhoradas</td>
+                    <td className="p-3 text-[#B5651D] font-medium">Queda drástica no El Niño</td>
                   </tr>
-                  <tr className="hover:bg-zinc-50/80">
-                    <td className="p-3 font-semibold text-zinc-900">Mucoho</td>
-                    <td className="p-3 text-zinc-600">Quissico</td>
-                    <td className="p-3 text-right font-mono">114 m</td>
-                    <td className="p-3 text-zinc-600">Arenoso com boa matéria orgânica</td>
-                    <td className="p-3 text-zinc-600">Consociação amendoim/mandioca</td>
-                    <td className="p-3 text-rose-600 font-medium">Erosão por ventos ciclónicos</td>
+                  <tr className="hover:bg-[#F2E9D8]/20">
+                    <td className="p-3 font-semibold text-[#1F2A1A]">Mucoho</td>
+                    <td className="p-3 text-[#5C6B52]">Quissico</td>
+                    <td className="p-3 text-right font-mono text-[#1F2A1A]">114 m</td>
+                    <td className="p-3 text-[#5C6B52]">Arenoso com boa matéria orgânica</td>
+                    <td className="p-3 text-[#5C6B52]">Consociação amendoim/mandioca</td>
+                    <td className="p-3 text-[#B5651D] font-medium">Erosão por ventos ciclónicos</td>
                   </tr>
-                  <tr className="hover:bg-zinc-50/80">
-                    <td className="p-3 font-semibold text-zinc-900">Zandamela</td>
-                    <td className="p-3 text-zinc-600">Zandamela</td>
-                    <td className="p-3 text-right font-mono">92 m</td>
-                    <td className="p-3 text-zinc-600">Aluvial nas baixas, arenoso nos altos</td>
-                    <td className="p-3 text-zinc-600">Tradicionais de ciclo curto</td>
-                    <td className="p-3 text-amber-600 font-medium">Cheias rápidas nas bacias</td>
+                  <tr className="hover:bg-[#F2E9D8]/20">
+                    <td className="p-3 font-semibold text-[#1F2A1A]">Zandamela</td>
+                    <td className="p-3 text-[#5C6B52]">Zandamela</td>
+                    <td className="p-3 text-right font-mono text-[#1F2A1A]">92 m</td>
+                    <td className="p-3 text-[#5C6B52]">Aluvial nas baixas, arenoso nos altos</td>
+                    <td className="p-3 text-[#5C6B52]">Tradicionais de ciclo curto</td>
+                    <td className="p-3 text-[#B5651D] font-medium">Cheias rápidas nas bacias</td>
                   </tr>
                 </tbody>
               </table>

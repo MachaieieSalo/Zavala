@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header, AppViewTab } from './components/Header';
 import { ImageCarousel } from './components/ImageCarousel';
-import { ThesisOverviewBanner } from './components/ThesisOverviewBanner';
+import { ThesisContext } from './components/common/ThesisContext';
+import { PageHeader } from './components/common/PageHeader';
+import { Button } from './components/common/Button';
 import { ThesisDataView } from './components/ThesisDataView';
 import { ThesisDataTablesModal } from './components/ThesisDataTablesModal';
 import { VoiceControlsBar } from './components/VoiceControlsBar';
@@ -25,11 +27,9 @@ import {
 import { browserSpeech } from './utils/browserSpeech';
 import {
   AlertCircle,
-  FileSpreadsheet,
   CheckCircle2,
   Volume2,
   BookOpen,
-  Camera,
   Layers,
   ArrowRight,
 } from 'lucide-react';
@@ -316,7 +316,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col text-zinc-900 font-sans antialiased">
+    <div className="min-h-screen bg-[#F2E9D8] flex flex-col text-[#1A2417] font-sans antialiased">
       {/* 1. Header with brand & clean responsive navigation */}
       <Header
         currentTab={currentTab}
@@ -327,69 +327,103 @@ export default function App() {
       />
 
       {/* 2. Main Workstation Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5">
-        {/* Subtle Dissertation Context Ribbon */}
-        <ThesisOverviewBanner
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4">
+        {/* Contextual Dissertation Ribbon — level adapts smoothly to active view */}
+        <ThesisContext
+          level={currentTab === 'dados' ? 'expanded' : currentTab === 'defesa' ? 'standard' : 'compact'}
           onOpenDataModal={() => setIsDataModalOpen(true)}
           currentLang={currentLang}
         />
 
-        {/* Global Error Banner if any */}
+        {/* Global Notice Banner if any */}
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start justify-between gap-3 shadow-xs">
+          <div className="p-3.5 rounded-[4px] bg-[#FCFAF6] border-l-4 border-[#A8531E] border-y border-r border-[#D9CDAF] text-[#1A2417] flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div className="flex-1 text-xs sm:text-sm">
-                <p className="font-bold">{currentLang === 'pt' ? 'Aviso do Sistema' : 'System Notice'}</p>
-                <p className="mt-0.5 text-rose-700 leading-relaxed">{errorMessage}</p>
-                <div className="mt-2.5">
-                  <button
-                    type="button"
+              <AlertCircle className="w-4 h-4 text-[#A8531E] shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs">
+                <p className="font-bold text-[#A8531E] uppercase tracking-wider text-[11px] font-mono">
+                  {currentLang === 'pt' ? 'Aviso do Sistema' : 'System Notice'}
+                </p>
+                <p className="mt-0.5 text-[#1A2417] leading-relaxed">{errorMessage}</p>
+                <div className="mt-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={handleBrowserSpeechPlay}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all cursor-pointer"
+                    icon={<Volume2 className="w-3.5 h-3.5" />}
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>{currentLang === 'pt' ? 'Ouvir Imediatamente com Voz Local do Navegador' : 'Listen with Local Browser Speech'}</span>
-                  </button>
+                    {currentLang === 'pt' ? 'Ouvir com Voz Local do Navegador' : 'Listen with Local Browser Speech'}
+                  </Button>
                 </div>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setErrorMessage(null)}
-              className="text-xs font-semibold text-rose-600 hover:text-rose-800 cursor-pointer"
+              className="text-xs font-semibold text-[#4F5C48] hover:text-[#1A2417] cursor-pointer"
             >
               {currentLang === 'pt' ? 'Fechar' : 'Close'}
             </button>
           </div>
         )}
 
-        {/* TAB: ESTÚDIO DE ÁUDIO */}
+        {/* TAB: ESTÚDIO DE ENSAIO ORAL */}
         {currentTab === 'estudio' && (
-          <div className="space-y-5">
-            {/* On Desktop (lg:), show sleek 2-column workstation; on mobile, cleanly stacked */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-              {/* Left Column: Audio Studio Controls & Editor (7 cols) */}
-              <div className="lg:col-span-7 space-y-4" ref={textInputRef}>
-                {/* Mobile-only shortcut banner to pick questions */}
-                <div className="lg:hidden p-3 rounded-xl bg-white border border-zinc-200 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-700" />
-                    <span className="font-medium text-zinc-800 truncate max-w-[200px]">
-                      {currentLoadedTitle}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentTab('defesa')}
-                    className="font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    <span>{currentLang === 'pt' ? 'Mudar Pergunta' : 'Change Question'}</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
+          <div className="max-w-4xl mx-auto space-y-4">
+            <PageHeader
+              context={currentLang === 'pt' ? 'BANCADA DE ENSAIO ORAL' : 'ORAL REHEARSAL WORKSTATION'}
+              title={currentLang === 'pt' ? 'Estúdio' : 'Studio'}
+              description={currentLang === 'pt'
+                ? 'Preparação de texto, modulação vocal neural e ensaio de locução para a defesa de dissertação.'
+                : 'Text preparation, neural voice modulation, and read-aloud rehearsal for the dissertation defense.'}
+            />
 
-                {/* Voice & Language Settings Bar */}
+            {/* NÍVEL 1: CONTEXTO DE PERGUNTA EM ENSAIO (Discreto e compacto, quando houver pergunta associada) */}
+            {selectedQuestionId && (
+              <div className="rounded-[4px] border border-[#D9CDAF] bg-[#FCFAF6] px-3.5 py-2 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-[#4F5C48] bg-[#EAE2D2]/60 px-1.5 py-0.5 rounded-[2px] shrink-0">
+                    {currentLang === 'pt' ? 'Pergunta em ensaio' : 'Rehearsal question'}
+                  </span>
+                  <span className="font-semibold text-[#1A2417] truncate">
+                    {currentLoadedTitle}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('defesa')}
+                  className="inline-flex items-center gap-1 font-medium text-[#354D2C] hover:text-[#1A2417] shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
+                >
+                  <span>{currentLang === 'pt' ? 'Alterar pergunta na Banca' : 'Change question in Defense'}</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* NÍVEL 2: MANUSCRITO (Centro óptico dominante da bancada) */}
+            <div ref={textInputRef} className="space-y-4">
+              <TextInputArea
+                text={text}
+                onChangeText={(newTxt) => {
+                  setText(newTxt);
+                  if (!newTxt.includes('Pergunta') && !newTxt.includes('Question')) {
+                    setSelectedQuestionId(null);
+                    setCurrentLoadedTitle(currentLang === 'pt' ? 'Texto Personalizado' : 'Custom Text');
+                  }
+                }}
+                onGenerate={handleGenerate}
+                isLoading={isLoading}
+                loadingStep={loadingStep}
+                maxChars={30000}
+                onBrowserSpeechPlay={handleBrowserSpeechPlay}
+                onBrowserSpeechStop={handleBrowserSpeechStop}
+                isBrowserSpeaking={isBrowserSpeaking}
+                currentLang={currentLang}
+              />
+
+              {/* NÍVEL 3: ENSAIO / PARÂMETROS E INSTRUMENTO DE ÁUDIO */}
+              <div className="space-y-3 pt-1">
+                {/* Barra de Ferramentas de Voz e Dicção */}
                 <VoiceControlsBar
                   selectedVariation={selectedVariation}
                   onSelectVariation={handleSelectVariation}
@@ -403,95 +437,34 @@ export default function App() {
                   currentLang={currentLang}
                 />
 
-                {/* Textarea Workspace */}
-                <TextInputArea
-                  text={text}
-                  onChangeText={(newTxt) => {
-                    setText(newTxt);
-                    if (!newTxt.includes('Pergunta') && !newTxt.includes('Question')) {
-                      setSelectedQuestionId(null);
-                      setCurrentLoadedTitle(currentLang === 'pt' ? 'Texto Personalizado' : 'Custom Text');
-                    }
-                  }}
-                  onGenerate={handleGenerate}
-                  isLoading={isLoading}
-                  loadingStep={loadingStep}
-                  maxChars={30000}
-                  onBrowserSpeechPlay={handleBrowserSpeechPlay}
-                  onBrowserSpeechStop={handleBrowserSpeechStop}
-                  isBrowserSpeaking={isBrowserSpeaking}
-                  currentLang={currentLang}
-                />
-
-                {/* Audio Player */}
+                {/* Reprodutor de Áudio e Feedback Acústico */}
                 <div id="player-container">
                   <AudioPlayer
                     currentAudio={currentAudio}
+                    isLoading={isLoading}
+                    errorMessage={errorMessage}
+                    onRetry={handleGenerate}
                     onDownloadDone={() => showToast(currentLang === 'pt' ? 'Arquivo MP3 descarregado com sucesso!' : 'MP3 file downloaded successfully!')}
+                    currentLang={currentLang}
                   />
                 </div>
-
-                {/* History */}
-                <HistoryList
-                  history={history}
-                  onPlayItem={handlePlayHistoryItem}
-                  onLoadText={(txt) => {
-                    setText(txt);
-                    showToast(currentLang === 'pt' ? 'Texto recarregado no editor!' : 'Text reloaded into editor!');
-                    if (textInputRef.current) {
-                      textInputRef.current.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  onDeleteItem={handleDeleteHistoryItem}
-                  onClearHistory={handleClearHistory}
-                />
               </div>
 
-              {/* Right Column (Desktop only): Live Question Companion (5 cols) */}
-              <div className="hidden lg:block lg:col-span-5 sticky top-20 space-y-4">
-                <SectionSelector
-                  onSelectQuestionText={handleSelectQuestionText}
-                  onPlayQuickSpeech={handleQuickBrowserSpeech}
-                  selectedQuestionId={selectedQuestionId}
-                  currentLoadedTitle={currentLoadedTitle}
-                  currentLang={currentLang}
-                />
-
-                {/* Compact Data Shocks Summary Widget */}
-                <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-zinc-900 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>{currentLang === 'pt' ? 'Choques Críticos Documentados (Tabela 5)' : 'Documented Critical Shocks (Table 5)'}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentTab('dados')}
-                      className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
-                    >
-                      {currentLang === 'pt' ? 'Ver todos' : 'View all'}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                    <div className="p-2 rounded-lg bg-zinc-50 border border-zinc-100">
-                      <span className="text-zinc-500 block">2000 ({currentLang === 'pt' ? 'Cheias' : 'Floods'})</span>
-                      <span className="text-rose-700 font-bold">-55,4% {currentLang === 'pt' ? 'perda' : 'loss'}</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-zinc-50 border border-zinc-100">
-                      <span className="text-zinc-500 block">2007 (Favio)</span>
-                      <span className="text-rose-700 font-bold">-64,3% {currentLang === 'pt' ? 'perda' : 'loss'}</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-zinc-50 border border-zinc-100">
-                      <span className="text-zinc-500 block">2016 (El Niño)</span>
-                      <span className="text-rose-700 font-bold">-59,4% {currentLang === 'pt' ? 'perda' : 'loss'}</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-zinc-50 border border-zinc-100">
-                      <span className="text-zinc-500 block">2023 ({currentLang === 'pt' ? 'Colapso' : 'Collapse'})</span>
-                      <span className="text-rose-700 font-bold">-92,5% {currentLang === 'pt' ? 'perda' : 'loss'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* NÍVEL 4: HISTÓRICO DE ENSAIOS (Secundário, lista contínua) */}
+              <HistoryList
+                history={history}
+                onPlayItem={handlePlayHistoryItem}
+                onLoadText={(txt) => {
+                  setText(txt);
+                  showToast(currentLang === 'pt' ? 'Texto recarregado no manuscrito!' : 'Text reloaded into manuscript!');
+                  if (textInputRef.current) {
+                    textInputRef.current.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                onDeleteItem={handleDeleteHistoryItem}
+                onClearHistory={handleClearHistory}
+                currentLang={currentLang}
+              />
             </div>
           </div>
         )}
@@ -499,26 +472,23 @@ export default function App() {
         {/* TAB: DEFESA Q&A (60 Perguntas & 7 Cenários) */}
         {currentTab === 'defesa' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-zinc-900">
-                  {currentLang === 'pt' ? 'Simulador de Perguntas e Respostas da Defesa' : 'Defense Q&A Simulator'}
-                </h2>
-                <p className="text-xs text-zinc-500">
-                  {currentLang === 'pt'
-                    ? '60 perguntas categorizadas em 7 cenários com modo de estudo e simulação real com cronómetro'
-                    : '60 dissertation defense questions across 7 scenarios with study mode and mock panel countdown simulator'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCurrentTab('estudio')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                <span>{currentLang === 'pt' ? 'Voltar ao Estúdio' : 'Back to Studio'}</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
+            <PageHeader
+              context={currentLang === 'pt' ? 'SALA DE ARGUIÇÃO' : 'EXAMINATION ROOM'}
+              title={currentLang === 'pt' ? 'Defesa' : 'Defense'}
+              description={currentLang === 'pt'
+                ? 'Simulação de arguição e preparação das respostas à banca.'
+                : 'Defense examination simulation and argument preparation.'}
+              actions={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentTab('estudio')}
+                  icon={<ArrowRight className="w-3.5 h-3.5" />}
+                >
+                  {currentLang === 'pt' ? 'Ir para o Estúdio' : 'Go to Studio'}
+                </Button>
+              }
+            />
 
             <SectionSelector
               onSelectQuestionText={handleSelectQuestionText}
@@ -533,6 +503,14 @@ export default function App() {
         {/* TAB: GALERIA DE CAMPO (Apêndice D) */}
         {currentTab === 'campo' && (
           <div className="space-y-4">
+            <PageHeader
+              context={currentLang === 'pt' ? 'CADERNO DE CAMPO (APÊNDICE D)' : 'FIELD RECORDS (APPENDIX D)'}
+              title={currentLang === 'pt' ? 'Registo Fotográfico e Espacial de Zavala' : 'Photographic & Spatial Field Records'}
+              description={currentLang === 'pt'
+                ? 'Documentação visual da colheita de mandioca, solo arenoso, encharcamento e infraestrutura agrícola nos 11 bairros.'
+                : 'Visual documentation of cassava harvest, sandy soils, waterlogging, and agricultural infrastructure across 11 villages.'}
+            />
+
             <ImageCarousel
               onSelectPhotoText={handleSelectQuestionText}
               onPlayQuickSpeech={handleQuickBrowserSpeech}
@@ -545,18 +523,13 @@ export default function App() {
         {/* TAB: TABELAS E DADOS OFICIAIS */}
         {currentTab === 'dados' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-zinc-900">
-                  {currentLang === 'pt' ? 'Tabelas Estatísticas e Espaciais da Dissertação' : 'Statistical & Spatial Dissertation Tables'}
-                </h2>
-                <p className="text-xs text-zinc-500">
-                  {currentLang === 'pt'
-                    ? 'Série histórica de 31 anos (1994-2024), perdas cumulativas (547.224 t), pressupostos e metodologia'
-                    : '31-year time series (1994–2024), cumulative losses (547,224 t), assumptions, and methodology'}
-                </p>
-              </div>
-            </div>
+            <PageHeader
+              context={currentLang === 'pt' ? 'ESTATÍSTICA E MODELAGEM' : 'STATISTICS & MODELING'}
+              title={currentLang === 'pt' ? 'Série Histórica e Tabelas do Modelo (1994–2024)' : 'Historical Time Series & Model Tables'}
+              description={currentLang === 'pt'
+                ? 'Série temporal de 31 anos, perdas cumulativas (547.224 t), pressupostos econométricos e camadas metodológicas.'
+                : '31-year time series, cumulative losses (547,224 t), econometric assumptions, and methodological layers.'}
+            />
 
             <ThesisDataView
               onSendToStudio={handleSendToStudio}
@@ -568,6 +541,14 @@ export default function App() {
         {/* TAB: PESQUISA GLOBAL (Dados e Fotos) */}
         {currentTab === 'pesquisa' && (
           <div className="space-y-4">
+            <PageHeader
+              context={currentLang === 'pt' ? 'ÍNDICE REMISSIVO E BUSCA' : 'INDEX & SEARCH'}
+              title={currentLang === 'pt' ? 'Motor de Pesquisa Integrada' : 'Integrated Search Engine'}
+              description={currentLang === 'pt'
+                ? 'Consulta cruzada em textos da dissertação, questões de banca, anos agrícolas e registos de campo.'
+                : 'Cross-query across dissertation texts, defense questions, crop years, and field records.'}
+            />
+
             <GlobalSearchEngineView
               onNavigateToTab={handleNavigateFromSearch}
               onSendToStudio={handleSendToStudio}
@@ -579,8 +560,8 @@ export default function App() {
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-zinc-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold border border-zinc-700 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-5 right-5 z-50 bg-[#1A2417] text-[#FCFAF6] px-3.5 py-2.5 rounded-[4px] shadow-md flex items-center gap-2 text-xs font-medium border border-[#354D2C] animate-in fade-in duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#4A6B3E] shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -592,13 +573,13 @@ export default function App() {
       />
 
       {/* Clean Editorial Footer */}
-      <footer className="mt-auto border-t border-zinc-200 py-6 text-center text-xs text-zinc-500 bg-white">
+      <footer className="mt-auto border-t border-[#D9CDAF] py-4 text-center text-xs text-[#4F5C48] bg-[#FCFAF6]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-medium text-zinc-700">
-            ZavalaVoz • Universidade Eduardo Mondlane (ESUDER)
+          <span className="font-semibold text-[#1A2417]">
+            ZAVALAVOZ · Universidade Eduardo Mondlane (ESUDER)
           </span>
-          <span className="text-zinc-500">
-            Tese de Yolanda Tamele • Zavala (1994-2024) • Suporte a 30.000 caracteres
+          <span className="text-[#4F5C48]">
+            Tese de Yolanda Tamele · Zavala (1994–2024) · Suporte a 30.000 caracteres
           </span>
         </div>
       </footer>

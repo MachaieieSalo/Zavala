@@ -1,12 +1,4 @@
 import React from 'react';
-import {
-  Mic,
-  BookOpen,
-  Camera,
-  Table,
-  Search,
-  Languages,
-} from 'lucide-react';
 import { TRANSLATIONS, SupportedLang } from '../data/translations';
 
 export type AppViewTab = 'estudio' | 'defesa' | 'campo' | 'dados' | 'pesquisa';
@@ -28,150 +20,121 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const t = TRANSLATIONS[currentLang];
 
+  const navItems: { id: AppViewTab; label: string; count?: number }[] = [
+    { id: 'estudio', label: t.tabs.estudio },
+    { id: 'defesa', label: t.tabs.defesa, count: questionCount },
+    { id: 'campo', label: t.tabs.campo },
+    { id: 'dados', label: t.tabs.dados },
+    { id: 'pesquisa', label: t.tabs.pesquisa },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
-        <div className="flex items-center justify-between h-16 gap-2">
+    <header className="sticky top-0 z-40 bg-[#FCFAF6] border-b border-[#D9CDAF]">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14 gap-4">
           {/* Brand Logo & Academic Identity */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
               onClick={() => onTabChange('estudio')}
-              className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-xs hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="ZavalaVoz - Home"
+              className="group flex items-center gap-2.5 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
+              title="ZavalaVoz — Início"
+              aria-label="ZavalaVoz Início"
             >
-              <Mic className="w-4 h-4 text-emerald-400" />
-            </button>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-bold text-zinc-900 tracking-tight">
-                  {t.appName}
-                </span>
-                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  ESUDER • UEM
-                </span>
+              <div className="w-7 h-7 rounded-[3px] bg-[#1A2417] text-[#FCFAF6] flex items-center justify-center font-mono font-bold text-xs tracking-tighter group-hover:bg-[#354D2C] transition-colors">
+                ZV
               </div>
-              <p className="text-[11px] text-zinc-500 hidden md:block truncate max-w-[260px]">
-                {t.appSubtitle}
-              </p>
-            </div>
+              <div className="leading-none">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-base font-bold text-[#1A2417] tracking-tight font-display">
+                    ZAVALAVOZ
+                  </span>
+                  <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-[#4F5C48] font-sans font-medium">
+                    ESUDER · UEM
+                  </span>
+                </div>
+                <p className="text-[10px] text-[#4F5C48] hidden lg:block mt-0.5 tracking-normal">
+                  {currentLang === 'pt' ? 'Ambiente de Preparação e Defesa Académica' : 'Academic Defense & Voice Workstation'}
+                </p>
+              </div>
+            </button>
           </div>
 
-          {/* Center Navigation Tabs */}
-          <nav className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-xs font-medium overflow-x-auto no-scrollbar">
-            <button
-              id="tab-btn-estudio"
-              type="button"
-              onClick={() => onTabChange('estudio')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                currentTab === 'estudio'
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Mic className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{t.tabs.estudio}</span>
-            </button>
-
-            <button
-              id="tab-btn-defesa"
-              type="button"
-              onClick={() => onTabChange('defesa')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                currentTab === 'defesa'
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-              <span>{t.tabs.defesa}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200 text-zinc-700 font-mono font-bold">
-                {questionCount}
-              </span>
-            </button>
-
-            <button
-              id="tab-btn-campo"
-              type="button"
-              onClick={() => onTabChange('campo')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                currentTab === 'campo'
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Camera className="w-3.5 h-3.5 text-amber-600" />
-              <span>{t.tabs.campo}</span>
-            </button>
-
-            <button
-              id="tab-btn-dados"
-              type="button"
-              onClick={() => onTabChange('dados')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                currentTab === 'dados'
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5 text-sky-600" />
-              <span>{t.tabs.dados}</span>
-            </button>
-
-            <button
-              id="tab-btn-pesquisa"
-              type="button"
-              onClick={() => onTabChange('pesquisa')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                currentTab === 'pesquisa'
-                  ? 'bg-white text-emerald-900 font-bold shadow-xs ring-1 ring-emerald-500/20'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Search className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{t.tabs.pesquisa}</span>
-            </button>
+          {/* Center Navigation Tabs - Editorial Underline System */}
+          <nav
+            className="flex items-center gap-1 sm:gap-2 h-full overflow-x-auto no-scrollbar"
+            aria-label="Navegação Principal"
+          >
+            {navItems.map((item) => {
+              const isActive = currentTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  id={`tab-btn-${item.id}`}
+                  type="button"
+                  onClick={() => onTabChange(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 h-full text-xs font-sans whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                    isActive
+                      ? 'text-[#1A2417] font-bold'
+                      : 'text-[#4F5C48] hover:text-[#1A2417] font-medium hover:bg-[#EAE2D2]/30'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {item.count !== undefined && (
+                    <span
+                      className={`text-[10px] font-mono px-1 py-0.2 rounded-[2px] ${
+                        isActive
+                          ? 'bg-[#1A2417] text-[#FCFAF6]'
+                          : 'bg-[#EAE2D2] text-[#4F5C48]'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                  {/* Non-color dependent active indicator: solid crisp line on active tab */}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#1A2417]" />
+                  )}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Right Language Toggle & Badge */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden xl:flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{t.header.charBadge}</span>
-            </div>
-
-            {/* Functional Bilingual PT / EN toggle */}
+          {/* Right Language Toggle */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Functional Bilingual PT / EN segmented switch */}
             <div
-              className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200 text-xs shadow-xs"
+              className="flex items-center p-0.5 rounded-[3px] border border-[#D9CDAF] bg-[#EAE2D2]/40 text-xs"
               role="group"
-              aria-label="Language selector"
+              aria-label="Seleção de idioma"
             >
               <button
                 id="btn-lang-pt"
                 type="button"
                 onClick={() => onLangChange('pt')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all font-bold cursor-pointer text-xs ${
+                aria-pressed={currentLang === 'pt'}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-[2px] transition-colors font-medium cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                   currentLang === 'pt'
-                    ? 'bg-white text-emerald-900 shadow-xs ring-1 ring-zinc-200'
-                    : 'text-zinc-500 hover:text-zinc-900'
+                    ? 'bg-[#FCFAF6] text-[#1A2417] font-bold border border-[#D9CDAF]/80'
+                    : 'text-[#4F5C48] hover:text-[#1A2417]'
                 }`}
                 title="Português (Moçambique pt-MZ, Portugal pt-PT, Brasil pt-BR, Angola pt-AO)"
               >
-                <span>🇲🇿</span>
                 <span>PT</span>
               </button>
               <button
                 id="btn-lang-en"
                 type="button"
                 onClick={() => onLangChange('en')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all font-bold cursor-pointer text-xs ${
+                aria-pressed={currentLang === 'en'}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-[2px] transition-colors font-medium cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                   currentLang === 'en'
-                    ? 'bg-white text-indigo-900 shadow-xs ring-1 ring-zinc-200'
-                    : 'text-zinc-500 hover:text-zinc-900'
+                    ? 'bg-[#FCFAF6] text-[#1A2417] font-bold border border-[#D9CDAF]/80'
+                    : 'text-[#4F5C48] hover:text-[#1A2417]'
                 }`}
                 title="English (United States en-US, United Kingdom en-GB, Australia en-AU)"
               >
-                <span>🇬🇧</span>
                 <span>EN</span>
               </button>
             </div>

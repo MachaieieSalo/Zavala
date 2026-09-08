@@ -66,10 +66,10 @@ export const DEFENSE_SCENARIOS: DefenseScenario[] = [
   },
   {
     id: 'cenario_fogo_cruzado',
-    name: '6. Fogo Cruzado: Perguntas-Armadilha',
-    nameEn: '6. Crossfire: High-Stakes Trap Questions',
-    description: 'Questões capciosas, contestações duras e provocações que testam a serenidade e o rigor científico da candidata.',
-    descriptionEn: 'Provocative questions, sharp pushbacks, and counter-arguments designed to test the candidate under pressure.',
+    name: '6. Arguição Crítica: Objecções e Vulnerabilidades',
+    nameEn: '6. Critical Inquiry: Objections & Vulnerabilities',
+    description: 'Questões de confrontação metodológica, contestações e objecções que testam a serenidade e o rigor científico da candidata.',
+    descriptionEn: 'Methodological inquiries, rigorous counter-arguments, and objections designed to test scientific rigor under pressure.',
     examinerType: 'Examinador Desafiador / Oponente Externo',
     examinerTypeEn: 'Challenging Examiner / External Opponent',
     color: 'purple',
@@ -95,7 +95,7 @@ export interface DissertationQuestion {
   category: 'Metodologia e Estatística' | 'Dinâmica Produtiva e Fases' | 'Clima, CHIRPS e Choques' | 'Análise Espacial em Quissico' | 'Conclusão e Recomendações' | 'Fisiologia e Maneio' | 'Etnografia e Comunidade';
   examinerRole: string;
   examinerRoleEn: string;
-  difficulty: 'Fundamental' | 'Avançado' | 'Fogo Cruzado';
+  difficulty: 'Fundamental' | 'Avançado' | 'Arguição Crítica';
   juryQuestion: string;
   juryQuestionEn: string;
   candidateResponse: string;
@@ -304,7 +304,7 @@ export const DISSERTATION_FULL_QUESTIONS: DissertationQuestion[] = [
     category: 'Clima, CHIRPS e Choques',
     examinerRole: 'Climatologista e Modelação Biofísica',
     examinerRoleEn: 'Climatologist & Biophysical Modeler',
-    difficulty: 'Fogo Cruzado',
+    difficulty: 'Arguição Crítica',
     juryQuestion: 'A safra de 2023 desabou para 35.371 t, mas o CHIRPS indicou anomalia pluviométrica POSITIVA (+78,1%). Como uma cultura tolerante à seca colapsa num ano de chuva acima da média?',
     juryQuestionEn: 'The 2023 harvest plunged to 35,371 t, yet CHIRPS recorded POSITIVE rainfall anomaly (+78.1%). How does a drought-resilient crop collapse in a wetter-than-average year?',
     candidateResponse: 'Esta é uma das descobertas mais importantes da dissertação. A quebra de 2023 não foi causada por seca, mas pelo Ciclone Freddy e tempestades consecutivas que despejaram chuvas torrenciais concentradas em poucos dias sobre solos costeiros de baixa declividade. O encharcamento prolongado gerou asfixia radicular (anoxia), proliferação violenta de podridão bacteriana e fúngica, e arrancamento mecânico das hastes pelo vento, apodrecendo os tubérculos no subsolo.',

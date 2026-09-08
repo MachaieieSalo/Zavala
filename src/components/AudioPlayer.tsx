@@ -9,19 +9,28 @@ import {
   VolumeX,
   Download,
   Check,
-  Music,
-  Share2,
-  FileAudio,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
+import { Button } from './common/Button';
+import { SupportedLang } from '../data/translations';
 
 interface AudioPlayerProps {
   currentAudio: TTSResponse | null;
+  isLoading?: boolean;
+  errorMessage?: string | null;
+  onRetry?: () => void;
   onDownloadDone?: () => void;
+  currentLang?: SupportedLang;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   currentAudio,
+  isLoading = false,
+  errorMessage = null,
+  onRetry,
   onDownloadDone,
+  currentLang = 'pt',
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -32,7 +41,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
-  // Audio source URL
+  const isPt = currentLang === 'pt';
+
+  // Fonte de dados base64 do áudio
   const audioSrc = currentAudio
     ? `data:${currentAudio.mimeType || 'audio/mpeg'};base64,${currentAudio.audioBase64}`
     : '';
@@ -114,12 +125,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     }
   };
 
-  // Direct MP3 download function
   const handleDownloadMp3 = () => {
     if (!currentAudio) return;
 
     try {
-      // Decode base64 to binary ArrayBuffer for clean MP3 Blob download
       const binaryString = window.atob(currentAudio.audioBase64);
       const len = binaryString.length;
       const bytes = new Uint8Array(len);
@@ -131,7 +140,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = currentAudio.fileName || 'audio-convertido.mp3';
+      a.download = currentAudio.fileName || 'ensaio-zavalavoz.mp3';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -153,29 +162,95 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  if (!currentAudio) {
+  // ESTADO 1: Áudio a ser gerado (Loading sóbrio)
+  if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center flex flex-col items-center justify-center text-slate-400">
-        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3 text-slate-300">
-          <Music className="w-6 h-6" />
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-[4px] border border-[#D9CDAF] bg-[#FCFAF6] p-4 text-xs font-sans text-[#1A2417] flex items-center justify-between gap-3"
+      >
+        <div className="flex items-center gap-2.5">
+          <Loader2 className="w-4 h-4 text-[#354D2C] animate-spin shrink-0" />
+          <div>
+            <span className="font-semibold block text-[#1A2417]">
+              {isPt ? 'Áudio a ser gerado...' : 'Generating audio...'}
+            </span>
+            <span className="text-[11px] text-[#4F5C48]">
+              {isPt
+                ? 'Processando prosódia, pontuação e cadência neural'
+                : 'Processing neural prosody, punctuation, and cadence'}
+            </span>
+          </div>
         </div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-1">
-          Nenhum áudio gerado ainda
-        </h3>
-        <p className="text-xs text-slate-400 max-w-sm">
-          Insira o texto acima, escolha a voz e o sotaque desejado e clique em "Gerar Áudio & MP3" para ouvir e baixar.
-        </p>
+        <span className="text-[11px] font-mono text-[#4F5C48] animate-pulse">
+          24 kHz
+        </span>
       </div>
     );
   }
 
+  // ESTADO 2: Erro de geração contextual
+  if (errorMessage && !currentAudio) {
+    return (
+      <div
+        role="alert"
+        className="rounded-[4px] border-l-4 border-[#A8531E] border-y border-r border-[#D9CDAF] bg-[#FCFAF6] p-3.5 text-xs font-sans text-[#1A2417] flex items-start justify-between gap-3"
+      >
+        <div className="flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-[#A8531E] shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <span className="font-bold text-[#A8531E] block">
+              {isPt ? 'Não foi possível gerar o áudio.' : 'Could not generate audio.'}
+            </span>
+            <p className="text-[11px] text-[#4F5C48] leading-relaxed">
+              {errorMessage}
+            </p>
+          </div>
+        </div>
+        {onRetry && (
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {isPt ? 'Tentar novamente' : 'Try again'}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // ESTADO 3: Áudio ainda não gerado (Estado neutro discreto, sem ilustrações ou cards excessivos)
+  if (!currentAudio) {
+    return (
+      <div
+        aria-label="Reprodutor de áudio inativo"
+        className="rounded-[4px] border border-[#D9CDAF] bg-[#FCFAF6]/60 p-3 text-xs text-[#4F5C48] font-sans flex items-center justify-between gap-2"
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#D9CDAF]" />
+          <span>
+            {isPt
+              ? 'Nenhum áudio gerado nesta sessão. Clique em "Gerar Áudio" acima para ouvir o ensaio.'
+              : 'No audio generated in this session. Click "Generate Audio" above to rehearse.'}
+          </span>
+        </div>
+        <span className="text-[10px] font-mono text-[#4F5C48]/70 uppercase shrink-0 hidden sm:inline">
+          {isPt ? 'Reprodutor Pronto' : 'Player Ready'}
+        </span>
+      </div>
+    );
+  }
+
+  // ESTADO 4: Áudio disponível / em reprodução (Bancada de ensaio compacta)
   const varInfo = getVariation(currentAudio.variation as VariationCode);
   const voiceInfo = getVoice(currentAudio.voice);
   const fileSizeKb = Math.round(currentAudio.fileSizeBytes / 1024);
+  const totalDuration = duration || currentAudio.durationSeconds || 0;
+  const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-md p-5 sm:p-6 space-y-5 transition-all">
-      {/* Hidden native audio tag */}
+    <section
+      aria-label="Reprodutor de áudio do ensaio"
+      className="rounded-[4px] border border-[#D9CDAF] bg-[#FCFAF6] p-3 sm:p-4 space-y-3 font-sans"
+    >
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -183,153 +258,113 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onEnded={handleEnded}
       />
 
-      {/* Top bar with audio metadata and badges */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center text-lg shadow-sm">
-            {varInfo.flag}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900 leading-tight">
-                Áudio Pronto em MP3
-              </h3>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                24kHz Estéreo
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {varInfo.name} • Voz {voiceInfo.displayName} ({voiceInfo.gender})
-            </p>
-          </div>
+      {/* Linha 1: Metadados do arquivo gerado e ação de descarregar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs pb-2 border-b border-[#D9CDAF]/60">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm leading-none" aria-hidden="true">{varInfo.flag}</span>
+          <span className="font-semibold text-[#1A2417] truncate">
+            {varInfo.name}
+          </span>
+          <span className="text-[#D9CDAF]">·</span>
+          <span className="text-[#4F5C48] truncate">
+            {voiceInfo.displayName}
+          </span>
+          <span className="text-[#D9CDAF] hidden sm:inline">·</span>
+          <span className="text-[#4F5C48] font-mono text-[11px] hidden sm:inline">
+            24 kHz · {fileSizeKb} KB
+          </span>
         </div>
 
-        {/* Big prominent MP3 Download CTA */}
-        <button
+        {/* Botão de download MP3 */}
+        <Button
           id="btn-download-mp3"
-          type="button"
+          variant={isDownloaded ? 'primary' : 'secondary'}
+          size="sm"
           onClick={handleDownloadMp3}
-          className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
-            isDownloaded
-              ? 'bg-emerald-600 text-white shadow-emerald-200'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 active:scale-95'
-          }`}
-          title="Baixar arquivo de áudio no formato .mp3"
+          icon={isDownloaded ? <Check className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+          title="Descarregar gravação em formato MP3"
         >
-          {isDownloaded ? (
-            <>
-              <Check className="w-4 h-4" />
-              <span>Baixado com Sucesso!</span>
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4" />
-              <span>Baixar Arquivo .MP3 ({fileSizeKb} KB)</span>
-            </>
-          )}
-        </button>
+          {isDownloaded
+            ? (isPt ? 'Baixado' : 'Downloaded')
+            : (isPt ? 'Descarregar .MP3' : 'Download .MP3')}
+        </Button>
       </div>
 
-      {/* Animated Waveform Visualizer */}
-      <div className="bg-slate-950 rounded-xl p-4 flex items-center justify-between gap-1 overflow-hidden relative shadow-inner">
-        <div className="flex items-center gap-1.5 h-10 w-full justify-center">
-          {[
-            'h-2 animate-wave-1',
-            'h-4 animate-wave-2',
-            'h-6 animate-wave-3',
-            'h-3 animate-wave-4',
-            'h-7 animate-wave-5',
-            'h-5 animate-wave-1',
-            'h-8 animate-wave-2',
-            'h-4 animate-wave-3',
-            'h-6 animate-wave-4',
-            'h-3 animate-wave-5',
-            'h-7 animate-wave-1',
-            'h-5 animate-wave-2',
-            'h-8 animate-wave-3',
-            'h-4 animate-wave-4',
-            'h-6 animate-wave-5',
-            'h-2 animate-wave-1',
-            'h-5 animate-wave-2',
-            'h-7 animate-wave-3',
-            'h-3 animate-wave-4',
-            'h-6 animate-wave-5',
-          ].map((barClass, idx) => (
-            <div
-              key={idx}
-              className={`w-1.5 rounded-full transition-all duration-300 ${
-                isPlaying
-                  ? `${barClass} bg-gradient-to-t from-indigo-500 to-violet-400`
-                  : 'h-2 bg-slate-800'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Small playing indicator on bottom right */}
-        <div className="absolute bottom-2 right-3 text-[10px] font-mono text-slate-400">
-          {isPlaying ? 'REPRODUZINDO' : 'PAUSADO'}
-        </div>
-      </div>
-
-      {/* Timeline scrubbing track */}
-      <div className="space-y-1.5">
+      {/* Linha 2: Barra de progresso linear pura (SEM waveform falsa) */}
+      <div className="space-y-1">
         <input
           id="audio-progress-bar"
           type="range"
           min={0}
-          max={duration || currentAudio.durationSeconds || 1}
+          max={totalDuration || 1}
           step={0.05}
           value={currentTime}
           onChange={handleSeek}
-          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+          aria-label={isPt ? 'Progresso do áudio em reprodução' : 'Audio playback progress'}
+          aria-valuemin={0}
+          aria-valuemax={totalDuration || 1}
+          aria-valuenow={currentTime}
+          className="w-full h-1.5 bg-[#EAE2D2] rounded-[1px] appearance-none cursor-pointer accent-[#1A2417] focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
+          style={{
+            background: `linear-gradient(to right, #1A2417 0%, #1A2417 ${progressPercent}%, #EAE2D2 ${progressPercent}%, #EAE2D2 100%)`,
+          }}
         />
-        <div className="flex justify-between text-xs font-mono text-slate-500">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration || currentAudio.durationSeconds)}</span>
+        <div className="flex justify-between text-[11px] font-mono text-[#4F5C48]">
+          <span className="tabular-nums font-semibold text-[#1A2417]">{formatTime(currentTime)}</span>
+          <span className="text-[10px] text-[#4F5C48] uppercase tracking-wider">
+            {isPlaying ? (isPt ? 'Em reprodução' : 'Playing') : (isPt ? 'Pausado' : 'Paused')}
+          </span>
+          <span className="tabular-nums">{formatTime(totalDuration)}</span>
         </div>
       </div>
 
-      {/* Control Buttons row: Play/Pause, Rewind, Speed, Volume */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        {/* Left: Playback controls */}
+      {/* Linha 3: Controles integrados — Play/Pause, Reiniciar, Velocidade, Volume */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
         <div className="flex items-center gap-2">
+          {/* Play / Pause Principal */}
           <button
             id="btn-play-pause-audio"
             type="button"
             onClick={togglePlay}
-            className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white flex items-center justify-center transition-all shadow-md shadow-indigo-200 cursor-pointer"
-            title={isPlaying ? 'Pausar' : 'Reproduzir'}
+            aria-label={isPlaying ? (isPt ? 'Pausar áudio' : 'Pause audio') : (isPt ? 'Reproduzir áudio' : 'Play audio')}
+            className="w-8 h-8 rounded-[3px] bg-[#1A2417] hover:bg-[#354D2C] text-[#FCFAF6] flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
           >
             {isPlaying ? (
-              <Pause className="w-5 h-5 fill-current" />
+              <Pause className="w-3.5 h-3.5 fill-current" />
             ) : (
-              <Play className="w-5 h-5 fill-current ml-0.5" />
+              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
             )}
           </button>
 
+          {/* Reiniciar */}
           <button
             id="btn-rewind-audio"
             type="button"
             onClick={handleRestart}
-            className="p-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Reiniciar do início"
+            aria-label={isPt ? 'Reiniciar áudio do início' : 'Restart audio from beginning'}
+            className="w-7 h-7 rounded-[3px] text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50 flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
+            title={isPt ? 'Reiniciar do início' : 'Restart from beginning'}
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3" />
           </button>
 
-          {/* Speed picker dropdown or buttons */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 ml-1">
+          {/* Seletor de Velocidade Compacto */}
+          <div
+            className="flex items-center p-0.5 rounded-[2px] bg-[#EAE2D2]/40 border border-[#D9CDAF]/80 text-[11px] font-mono ml-1"
+            role="group"
+            aria-label={isPt ? 'Velocidade de reprodução' : 'Playback speed'}
+          >
             {[0.8, 1.0, 1.25, 1.5].map((rate) => (
               <button
                 key={rate}
                 id={`playback-rate-${rate}`}
                 type="button"
                 onClick={() => handleRateChange(rate)}
-                className={`px-2 py-0.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                aria-pressed={playbackRate === rate}
+                className={`px-1.5 py-0.5 rounded-[1px] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                   playbackRate === rate
-                    ? 'bg-white text-indigo-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#1A2417] text-[#FCFAF6] font-bold'
+                    : 'text-[#4F5C48] hover:text-[#1A2417]'
                 }`}
               >
                 {rate === 1.0 ? '1x' : `${rate}x`}
@@ -338,19 +373,20 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
         </div>
 
-        {/* Right: Volume slider */}
-        <div className="flex items-center gap-2">
+        {/* Volume & Mute */}
+        <div className="flex items-center gap-1.5">
           <button
             id="btn-toggle-mute"
             type="button"
             onClick={toggleMute}
-            className="text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+            aria-label={isMuted ? (isPt ? 'Activar som' : 'Unmute') : (isPt ? 'Silenciar som' : 'Mute')}
+            className="text-[#4F5C48] hover:text-[#1A2417] p-1 rounded-[2px] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
             title={isMuted ? 'Desmutar' : 'Mutar'}
           >
             {isMuted || volume === 0 ? (
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-3.5 h-3.5" />
             ) : (
-              <Volume2 className="w-4 h-4" />
+              <Volume2 className="w-3.5 h-3.5" />
             )}
           </button>
           <input
@@ -361,16 +397,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             step={0.05}
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-20 sm:w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            aria-label={isPt ? 'Volume de reprodução' : 'Playback volume'}
+            className="w-16 h-1 bg-[#EAE2D2] rounded-[1px] appearance-none cursor-pointer accent-[#1A2417] focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
           />
         </div>
       </div>
 
-      {/* Generated text snippet preview */}
-      <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 border border-slate-200/80">
-        <span className="font-semibold text-slate-700">Texto convertido:</span>{' '}
-        <span className="italic line-clamp-2">"{currentAudio.text}"</span>
-      </div>
-    </div>
+      {/* Excerto curto do texto correspondente em estilo itálico editorial */}
+      {currentAudio.text && (
+        <p className="text-[11px] text-[#4F5C48] italic line-clamp-1 pt-1 border-t border-[#D9CDAF]/40">
+          "{currentAudio.text}"
+        </p>
+      )}
+    </section>
   );
 };
