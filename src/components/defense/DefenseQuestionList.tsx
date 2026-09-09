@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Flame, Check } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import {
   DissertationQuestion,
   DEFENSE_SCENARIOS,
@@ -79,7 +79,7 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
           </select>
         </div>
 
-        {/* Difficulty Filter (Editorial Line) */}
+        {/* Difficulty Filter (Responsive 2x2 on Mobile, 4 Cols on Desktop) */}
         <div>
           <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[#4F5C48] mb-1">
             <span>{isPt ? 'Nível de Exigência' : 'Rigor Level'}</span>
@@ -87,16 +87,16 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
               {questions.length} {isPt ? 'encontradas' : 'found'}
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-1">
-            {(['todas', 'Fundamental', 'Avançado', 'Fogo Cruzado'] as const).map((diff) => {
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {(['todas', 'Fundamental', 'Avançado', 'Arguição Crítica'] as const).map((diff) => {
               const isSelected = selectedDifficulty === diff;
               const label =
                 diff === 'todas'
                   ? isPt
                     ? 'Todas'
                     : 'All'
-                  : diff === 'Fogo Cruzado' && !isPt
-                  ? 'Crossfire'
+                  : diff === 'Arguição Crítica' && !isPt
+                  ? 'Critical Inquiry'
                   : diff;
 
               return (
@@ -104,11 +104,16 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
                   key={diff}
                   type="button"
                   onClick={() => onDifficultyChange(diff)}
-                  className={`px-1.5 py-1 rounded-[3px] text-[11px] font-medium transition-colors cursor-pointer text-center truncate focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                  title={
+                    diff === 'Arguição Crítica'
+                      ? isPt
+                        ? 'Arguição Crítica: Categoria pedagógica do simulador (não é classificação oficial UEM/ESUDER)'
+                        : 'Critical Inquiry: Simulator pedagogical category (not an official UEM/ESUDER classification)'
+                      : undefined
+                  }
+                  className={`px-2 py-1.5 rounded-[3px] text-[11px] font-medium transition-colors cursor-pointer text-center truncate focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                     isSelected
-                      ? diff === 'Fogo Cruzado'
-                        ? 'bg-[#A8531E] text-[#FCFAF6] font-semibold'
-                        : 'bg-[#1A2417] text-[#FCFAF6] font-semibold'
+                      ? 'bg-[#1A2417] text-[#FCFAF6] font-semibold'
                       : 'bg-[#FCFAF6] text-[#4F5C48] border border-[#D9CDAF] hover:bg-[#EAE2D2]/50'
                   }`}
                 >
@@ -125,7 +130,7 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
         {questions.map((q) => {
           const isSelected = q.id === selectedQuestionId;
           const formattedNum = q.number < 10 ? `0${q.number}` : `${q.number}`;
-          const isCrossfire = q.difficulty === 'Fogo Cruzado';
+          const isCriticalInquiry = q.difficulty === 'Arguição Crítica';
           const title = questionLang === 'pt' ? q.title : q.titleEn;
           const examiner = questionLang === 'pt' ? q.examinerRole : q.examinerRoleEn;
 
@@ -153,13 +158,16 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
                   <span className="text-[10px] text-[#4F5C48] truncate font-sans">
                     {examiner}
                   </span>
-                  {isCrossfire && (
+                  {isCriticalInquiry && (
                     <span
-                      title="Fogo Cruzado"
-                      className="inline-flex items-center text-[10px] font-semibold text-[#A8531E] shrink-0"
+                      title={
+                        isPt
+                          ? 'Arguição Crítica: Categoria pedagógica do simulador (não é classificação oficial UEM/ESUDER)'
+                          : 'Critical Inquiry: Simulator pedagogical category (not an official UEM/ESUDER classification)'
+                      }
+                      className="text-[10px] font-medium text-[#4F5C48] bg-[#EAE2D2]/60 px-1.5 py-0.2 rounded-[2px] shrink-0"
                     >
-                      <Flame className="w-3 h-3 mr-0.5" />
-                      {isPt ? 'Armadilha' : 'Trap'}
+                      {isPt ? 'Crítica' : 'Critical'}
                     </span>
                   )}
                 </div>

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
-  CheckCircle2,
-  AlertCircle,
   Volume2,
   ChevronDown,
   ChevronUp,
   MessageSquare,
   BookOpen,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { DissertationQuestion } from '../../data/dissertationText';
 import { SupportedLang } from '../../data/translations';
@@ -39,91 +39,181 @@ export const DefenseFeedbackView: React.FC<DefenseFeedbackViewProps> = ({
 
   return (
     <section
-      aria-label={isPt ? 'Parecer de Avaliação e Réplica da Banca' : 'Evaluation Memo and Board Rejoinder'}
+      aria-label={isPt ? 'Grelha de Auto-Verificação e Réplica da Banca' : 'Self-Verification Grid and Board Rejoinder'}
+      aria-live="polite"
       className="bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-5 sm:p-6 space-y-6"
     >
-      {/* Editorial Title / Memo Header */}
-      <div className="border-b border-[#D9CDAF] pb-3 flex items-center justify-between">
-        <div>
-          <h3 className="text-xs uppercase tracking-wider font-semibold text-[#1A2417]">
-            {isPt ? 'Parecer Académico de Arguição' : 'Academic Examination Assessment'}
-          </h3>
-          <p className="text-[11px] text-[#4F5C48]">
-            {feedback.examinerTone}
-          </p>
-        </div>
-        <span className="text-[10px] font-mono text-[#4F5C48] bg-[#EAE2D2]/50 px-2 py-0.5 rounded-[2px]">
-          {isPt ? 'Critérios de Defesa de Mestrado' : 'Master\'s Defense Criteria'}
-        </span>
-      </div>
-
-      {/* Structured Editorial Memo (No SaaS cards, strictly typography & dividers) */}
-      <div className="space-y-4 text-xs sm:text-sm text-[#1A2417] leading-relaxed">
-        {/* Adequação */}
-        <div className="space-y-1">
-          <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px] block">
-            {isPt ? '1. Adequação ao Problema Formulado' : '1. Alignment with Formulated Problem'}
+      {/* 1. GRELHA DE AUTO-VERIFICAÇÃO (Editorial, Rigorosa, Não Punitiva) */}
+      <div className="space-y-4">
+        <div className="border-b border-[#D9CDAF] pb-3 flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+          <div>
+            <h3 className="text-xs uppercase tracking-wider font-bold text-[#1A2417]">
+              {isPt ? 'Grelha de Auto-Verificação' : 'Self-Verification Grid'}
+            </h3>
+            <p className="text-xs text-[#4F5C48]">
+              {isPt
+                ? 'Critérios que a sua resposta deve conseguir sustentar perante a banca.'
+                : 'Criteria that your answer must substantiate before the examination board.'}
+            </p>
+          </div>
+          <span className="text-[10px] text-[#4F5C48] italic self-start sm:self-auto">
+            {isPt
+              ? 'Verificação orientadora de pontos-chave'
+              : 'Key-point guiding verification'}
           </span>
-          <p className="text-[#4F5C48]">
-            {feedback.adequacy}
-          </p>
         </div>
 
-        {/* Rigor Académico & Fundamentação */}
-        <div className="space-y-1 pt-2 border-t border-[#D9CDAF]/50">
-          <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px] block">
-            {isPt ? '2. Rigor Académico & Evidência Empírica' : '2. Academic Rigor & Empirical Evidence'}
-          </span>
-          <p className="text-[#4F5C48]">
-            {feedback.academicRigor}
-          </p>
-        </div>
-
-        {/* Clareza & Oratória */}
-        <div className="space-y-1 pt-2 border-t border-[#D9CDAF]/50">
-          <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px] block">
-            {isPt ? '3. Clareza de Elocução e Postura Oratória' : '3. Elocution Clarity & Speaking Cadence'}
-          </span>
-          <p className="text-[#4F5C48]">
-            {feedback.clarity}
-          </p>
-        </div>
-
-        {/* Pontos Fortes e A Aprofundar (Duas colunas estruturadas ou lista vertical) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#D9CDAF]/50">
-          {/* Pontos Fortes */}
-          <div className="space-y-2">
-            <span className="font-bold text-[#354D2C] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#4A6B3E]" />
-              <span>{isPt ? 'Pontos Fortes da Resposta' : 'Strengths of the Response'}</span>
-            </span>
-            <ul className="space-y-1 text-xs text-[#4F5C48] list-disc list-inside">
-              {feedback.strengths.map((st, i) => (
-                <li key={i} className="leading-snug">
-                  {st}
-                </li>
-              ))}
-            </ul>
+        {/* Critérios Editoriais */}
+        <div className="space-y-3.5 text-xs sm:text-sm text-[#1A2417] leading-relaxed">
+          {/* ADEQUAÇÃO */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px]">
+                {isPt ? 'Adequação' : 'Alignment'}
+              </span>
+              <span className="text-[10px] text-[#4F5C48] italic">
+                {isPt ? 'A resposta enfrenta directamente a questão?' : 'Does the response directly address the question?'}
+              </span>
+            </div>
+            <p className="text-[#4F5C48]">
+              {feedback.adequacy}
+            </p>
           </div>
 
-          {/* A Aprofundar */}
-          <div className="space-y-2">
-            <span className="font-bold text-[#A8531E] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-[#A8531E]" />
-              <span>{isPt ? 'Aspetos a Aprofundar' : 'Areas to Deepen'}</span>
-            </span>
-            <ul className="space-y-1 text-xs text-[#4F5C48] list-disc list-inside">
-              {feedback.toDeepen.map((item, i) => (
-                <li key={i} className="leading-snug">
-                  {item}
-                </li>
-              ))}
-            </ul>
+          {/* RIGOR EMPÍRICO */}
+          <div className="space-y-1 pt-3 border-t border-[#D9CDAF]/50">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px]">
+                {isPt ? 'Rigor Empírico' : 'Empirical Rigor'}
+              </span>
+              <span className="text-[10px] text-[#4F5C48] italic">
+                {isPt ? 'Mobiliza evidência, dados ou metodologia da tese?' : 'Does it mobilize data or thesis methodology?'}
+              </span>
+            </div>
+            <p className="text-[#4F5C48]">
+              {feedback.academicRigor}
+            </p>
           </div>
+
+          {/* CLAREZA */}
+          <div className="space-y-1 pt-3 border-t border-[#D9CDAF]/50">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px]">
+                {isPt ? 'Clareza' : 'Clarity'}
+              </span>
+              <span className="text-[10px] text-[#4F5C48] italic">
+                {isPt ? 'Linha argumentativa compreensível e defensável oralmente?' : 'Cohesive and orally defensible argument?'}
+              </span>
+            </div>
+            <p className="text-[#4F5C48]">
+              {feedback.clarity}
+            </p>
+          </div>
+
+          {/* Pontos observados e a reforçar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#D9CDAF]/50">
+            {/* Pontos de Sustentação */}
+            <div className="space-y-1.5">
+              <span className="font-semibold text-[#354D2C] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#354D2C]" />
+                <span>{isPt ? 'Pontos de Sustentação Observados' : 'Observed Defense Anchors'}</span>
+              </span>
+              <ul className="space-y-1 text-xs text-[#4F5C48] list-disc list-inside">
+                {feedback.strengths.map((st, i) => (
+                  <li key={i} className="leading-snug">
+                    {st}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Aspetos a Reforçar */}
+            <div className="space-y-1.5">
+              <span className="font-semibold text-[#A8531E] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-[#A8531E]" />
+                <span>{isPt ? 'Aspetos a Reforçar perante a Banca' : 'Points to Reinforce Before the Board'}</span>
+              </span>
+              <ul className="space-y-1 text-xs text-[#4F5C48] list-disc list-inside">
+                {feedback.toDeepen.map((item, i) => (
+                  <li key={i} className="leading-snug">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Checklist de Evidências da Pergunta (Fase 5.3) */}
+          {feedback.evidenceChecklist && feedback.evidenceChecklist.length > 0 && (
+            <div className="pt-3 border-t border-[#D9CDAF]/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px]">
+                  {isPt ? 'Critérios de Evidência da Pergunta' : 'Question Evidence Criteria'}
+                </span>
+                <span className="text-[10px] text-[#4F5C48] italic">
+                  {isPt
+                    ? 'Verificação orientadora com base nos dados da dissertação'
+                    : 'Guidance verification based on dissertation evidence'}
+                </span>
+              </div>
+
+              <div className="space-y-1.5 pt-0.5">
+                {feedback.evidenceChecklist.map((crit) => (
+                  <div
+                    key={crit.id}
+                    className={`p-2.5 rounded-[3px] border text-xs leading-relaxed ${
+                      crit.isSatisfied
+                        ? 'bg-[#FCFAF6] border-[#D9CDAF] text-[#1A2417]'
+                        : 'bg-[#FCFAF6]/60 border-[#D9CDAF]/70 text-[#4F5C48]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {crit.isSatisfied ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#354D2C] shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-[#A8531E] shrink-0" />
+                        )}
+                        <span className="font-semibold text-[#1A2417]">
+                          {isPt ? crit.labelPt : crit.labelEn}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] shrink-0 ${
+                          crit.isSatisfied
+                            ? 'bg-[#354D2C]/10 text-[#354D2C] font-semibold'
+                            : 'bg-[#EAE2D2]/60 text-[#4F5C48]'
+                        }`}
+                      >
+                        {crit.isSatisfied
+                          ? isPt ? 'Verificado' : 'Verified'
+                          : isPt ? 'A reforçar' : 'To reinforce'}
+                      </span>
+                    </div>
+
+                    {!crit.isSatisfied && (
+                      <p className="mt-1 text-[11px] text-[#A8531E] pl-5.5 italic">
+                        {isPt ? crit.guidancePt : crit.guidanceEn}
+                      </p>
+                    )}
+
+                    {crit.isSatisfied && crit.matchedClues.length > 0 && (
+                      <p className="mt-1 text-[10px] text-[#4F5C48] pl-5.5 font-mono">
+                        {isPt ? 'Evidências identificadas: ' : 'Identified evidence: '}
+                        <span className="text-[#1A2417] font-sans font-medium">
+                          {crit.matchedClues.join(', ')}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* RÉPLICA DA BANCA (PERGUNTA DE SEGUIMENTO) - Composição Editorial Vertical */}
+      {/* 2. RÉPLICA DA BANCA (PERGUNTA DE SEGUIMENTO) */}
       <div className="p-4 sm:p-5 border-l-3 border-[#1A2417] bg-[#EAE2D2]/25 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -138,6 +228,7 @@ export const DefenseFeedbackView: React.FC<DefenseFeedbackViewProps> = ({
             size="sm"
             onClick={() => onPlaySpeech(feedback.followUpQuestion)}
             icon={<Volume2 className="w-3.5 h-3.5" />}
+            title={isPt ? 'Ouvir enunciação da réplica' : 'Listen to rejoinder delivery'}
           >
             {isPt ? 'Ouvir Réplica' : 'Listen Rejoinder'}
           </Button>
@@ -147,26 +238,28 @@ export const DefenseFeedbackView: React.FC<DefenseFeedbackViewProps> = ({
           “{feedback.followUpQuestion}”
         </blockquote>
 
-        {/* Resposta à Réplica (Continuação da conversa académica sem chat bubble) */}
-        <div className="pt-2 space-y-1.5">
-          <label className="block text-[10px] uppercase tracking-wider font-semibold text-[#4F5C48]">
-            {isPt ? 'Sua Tréplica / Esclarecimento Adicional' : 'Your Counter-Rebuttal / Additional Clarification'}
+        {/* Tréplica simplificada / bloco de notas discreto */}
+        <div className="pt-2 space-y-1">
+          <label className="block text-[11px] text-[#4F5C48]">
+            {isPt
+              ? 'Registe aqui, se necessário, como responderia à objecção.'
+              : 'Note here, if needed, how you would address this objection.'}
           </label>
           <textarea
             value={rebuttalText}
             onChange={(e) => setRebuttalText(e.target.value)}
             placeholder={
               isPt
-                ? 'Responda à réplica formulada pelo júri mantendo a solidez dos dados de Zavala...'
-                : 'Address the board\'s rejoinder maintaining factual grounding from Zavala data...'
+                ? 'Nota de tréplica (opcional)...'
+                : 'Rebuttal note (optional)...'
             }
-            rows={3}
-            className="w-full p-2.5 rounded-[3px] bg-[#FCFAF6] border border-[#D9CDAF] text-xs sm:text-sm text-[#1A2417] placeholder:text-[#4F5C48]/50 focus-visible:outline-2 focus-visible:outline-[#2A3A24] font-serif"
+            rows={2}
+            className="w-full p-2.5 rounded-[3px] bg-[#FCFAF6] border border-[#D9CDAF] text-xs sm:text-sm text-[#1A2417] placeholder:text-[#4F5C48]/40 focus-visible:outline-2 focus-visible:outline-[#2A3A24] font-serif"
           />
         </div>
       </div>
 
-      {/* RESPOSTA CIENTÍFICA OFICIAL DE YOLANDA TAMELE (Comparação / Referência) */}
+      {/* 3. RESPOSTA CIENTÍFICA DE REFERÊNCIA (Colapsável por defeito) */}
       <div className="pt-2 border-t border-[#D9CDAF]">
         <button
           type="button"
@@ -190,18 +283,26 @@ export const DefenseFeedbackView: React.FC<DefenseFeedbackViewProps> = ({
 
         {showOfficialAnswer && (
           <div className="mt-2 p-4 bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] space-y-2 text-xs sm:text-sm leading-relaxed font-serif text-[#1A2417]">
-            <div className="flex items-center justify-between pb-1 border-b border-[#D9CDAF]/50">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#354D2C]">
-                {isPt ? 'Texto Oficial da Dissertação (UEM / ESUDER)' : 'Official Dissertation Defense Script (UEM / ESUDER)'}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-1.5 border-b border-[#D9CDAF]/50">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#354D2C]">
+                  {isPt ? 'Texto de Apoio da Dissertação (UEM / ESUDER)' : 'Supporting Dissertation Text (UEM / ESUDER)'}
+                </span>
+                <span className="text-[10px] text-[#4F5C48] italic">
+                  {isPt
+                    ? 'Registo empírico de referência da autora Yolanda Tamele'
+                    : 'Reference empirical record by author Yolanda Tamele'}
+                </span>
+              </div>
+              <button
+                type="button"
                 onClick={() => onPlaySpeech(officialAnswer)}
-                icon={<Volume2 className="w-3.5 h-3.5" />}
+                className="text-xs text-[#4F5C48] hover:text-[#1A2417] inline-flex items-center gap-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24]"
+                title={isPt ? 'Ouvir resposta oficial' : 'Listen to official answer'}
               >
-                {isPt ? 'Ouvir' : 'Listen'}
-              </Button>
+                <Volume2 className="w-3 h-3" />
+                <span>{isPt ? 'Ouvir' : 'Listen'}</span>
+              </button>
             </div>
             <p className="text-[#1A2417]">
               {officialAnswer}

@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   DissertationQuestion,
   DISSERTATION_FULL_QUESTIONS,
-  getAllDissertationText,
 } from '../data/dissertationText';
 import {
   Languages,
@@ -10,7 +9,6 @@ import {
   ArrowRight,
   Shuffle,
   ListFilter,
-  BookOpen,
 } from 'lucide-react';
 import { SupportedLang } from '../data/translations';
 import { Button } from './common/Button';
@@ -18,7 +16,10 @@ import { DefenseQuestionList } from './defense/DefenseQuestionList';
 import { DefenseQuestionViewer } from './defense/DefenseQuestionViewer';
 import { DefenseResponseArea } from './defense/DefenseResponseArea';
 import { DefenseFeedbackView } from './defense/DefenseFeedbackView';
-import { DefenseSimulationSummary } from './defense/DefenseSimulationSummary';
+import {
+  DefenseSimulationSummary,
+  QuestionSimulationRecord,
+} from './defense/DefenseSimulationSummary';
 import {
   generateAcademicEvaluation,
   EvaluationFeedback,
@@ -70,6 +71,9 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
 
   // Candidate drafted responses cache (stored per question ID)
   const [draftedResponses, setDraftedResponses] = useState<Record<string, string>>({});
+
+  // Delivered set to track submissions
+  const [deliveredQuestions, setDeliveredQuestions] = useState<Record<string, boolean>>({});
 
   // Active evaluation feedback per question
   const [evaluations, setEvaluations] = useState<Record<string, EvaluationFeedback>>({});
@@ -125,6 +129,13 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
     return DISSERTATION_FULL_QUESTIONS.findIndex((q) => q.id === currentQuestion.id);
   }, [currentQuestion.id]);
 
+  const hasPrevious =
+    activeMode === 'simulador' ? mockIndex > 0 : currentQuestionIndex > 0;
+  const hasNext =
+    activeMode === 'simulador'
+      ? mockIndex < mockQuestions.length - 1
+      : currentQuestionIndex < DISSERTATION_FULL_QUESTIONS.length - 1;
+
   const handlePreviousQuestion = () => {
     if (activeMode === 'simulador') {
       setMockIndex((prev) => Math.max(0, prev - 1));
@@ -158,6 +169,12 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
 
   const handleEvaluate = () => {
     setIsEvaluating(true);
+    // Mark as delivered
+    setDeliveredQuestions((prev) => ({
+      ...prev,
+      [currentQuestion.id]: true,
+    }));
+
     const candidateText =
       draftedResponses[currentQuestion.id] ||
       (questionLang === 'pt' ? currentQuestion.candidateResponse : currentQuestion.candidateResponseEn);
@@ -173,33 +190,59 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
     }, 250);
   };
 
-  const handleLoadFullDissertation = () => {
-    const fullText = getAllDissertationText();
-    onSelectQuestionText(
-      fullText,
-      isPt
-        ? 'Dissertação Completa de Zavala (Todas as 60 Perguntas)'
-        : 'Complete Zavala Dissertation (All 60 Questions)'
-    );
-  };
-
   const activeResponseText = draftedResponses[currentQuestion.id] ?? '';
   const activeFeedback = evaluations[currentQuestion.id];
 
+  // Build factual simulation session records for summary
+  const simulationRecords: Record<string, QuestionSimulationRecord> = useMemo(() => {
+    const records: Record<string, QuestionSimulationRecord> = {};
+    for (const q of mockQuestions) {
+      const text = (draftedResponses[q.id] || '').trim();
+      const wordCount = text ? text.split(/\s+/).length : 0;
+      const isVerified = !!evaluations[q.id];
+      const isDelivered = !!deliveredQuestions[q.id] || isVerified;
+
+      let status: QuestionSimulationRecord['status'] = 'NÃO RESPONDIDA';
+      if (isVerified) {
+        status = 'VERIFICADA';
+      } else if (isDelivered) {
+        status = 'ENTREGUE';
+      } else if (wordCount > 0) {
+        status = 'RASCUNHO';
+      }
+
+      records[q.id] = {
+        question: q,
+        status,
+        wordCount,
+        isDelivered,
+        isVerified,
+      };
+    }
+    return records;
+  }, [mockQuestions, draftedResponses, evaluations, deliveredQuestions]);
+
   return (
     <div className="space-y-4 font-sans text-[#1A2417]">
-      {/* NÍVEL 1: BARRA DE FERRAMENTAS DA SALA DE ARGUIÇÃO */}
+      {/* NÍVEL 1: BARRA DE NAVEGAÇÃO DA SALA DE ARGUIÇÃO */}
       <div className="bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Mode Switcher */}
+        {/* Accessible Mode Switcher (role="tablist") */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-0.5 rounded-[4px] border border-[#D9CDAF] bg-[#EAE2D2]/40 text-xs font-medium">
+          <div
+            role="tablist"
+            aria-label={isPt ? 'Modo de Arguição' : 'Examination Mode'}
+            className="flex items-center p-0.5 rounded-[4px] border border-[#D9CDAF] bg-[#EAE2D2]/40 text-xs font-medium"
+          >
             <button
+              id="tab-estudo"
+              role="tab"
+              aria-selected={activeMode === 'estudo'}
+              aria-controls="panel-defesa"
               type="button"
               onClick={() => {
                 setActiveMode('estudo');
                 setIsMockFinished(false);
               }}
-              aria-pressed={activeMode === 'estudo'}
               className={`px-3 py-1.5 rounded-[2px] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                 activeMode === 'estudo'
                   ? 'bg-[#1A2417] text-[#FCFAF6] font-semibold'
@@ -209,6 +252,10 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               {isPt ? 'Modo Estudo (60 Perguntas)' : 'Study Mode (60 Questions)'}
             </button>
             <button
+              id="tab-simulador"
+              role="tab"
+              aria-selected={activeMode === 'simulador'}
+              aria-controls="panel-defesa"
               type="button"
               onClick={() => {
                 if (mockQuestions.length === 0) startMockDefense(5);
@@ -217,7 +264,6 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
                   setIsMockFinished(false);
                 }
               }}
-              aria-pressed={activeMode === 'simulador'}
               className={`px-3 py-1.5 rounded-[2px] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
                 activeMode === 'simulador'
                   ? 'bg-[#1A2417] text-[#FCFAF6] font-semibold'
@@ -234,15 +280,15 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               size="sm"
               onClick={() => startMockDefense(5)}
               icon={<Shuffle className="w-3.5 h-3.5" />}
+              title={isPt ? 'Sortear novo grupo de 5 perguntas' : 'Draw new 5-question panel'}
             >
               {isPt ? 'Sortear Nova' : 'Redraw'}
             </Button>
           )}
         </div>
 
-        {/* Global actions: Language & Full Text */}
-        <div className="flex items-center gap-2">
-          {/* Question Text Lang Toggle (PT / EN) */}
+        {/* Question Text Lang Toggle (PT / EN) - Discrete, Contextual */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             variant="secondary"
             size="sm"
@@ -252,25 +298,14 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
           >
             {questionLang.toUpperCase()}
           </Button>
-
-          {activeMode === 'estudo' && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleLoadFullDissertation}
-              title={isPt ? 'Carregar todas as 60 perguntas no estúdio' : 'Load all 60 questions into studio'}
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-            >
-              {isPt ? 'Carregar Todas no Estúdio' : 'Load All into Studio'}
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* SIMULATOR COMPLETED SUMMARY VIEW */}
+      {/* SIMULATOR COMPLETED SUMMARY VIEW (Factual Session Record) */}
       {activeMode === 'simulador' && isMockFinished ? (
         <DefenseSimulationSummary
           questions={mockQuestions}
+          records={simulationRecords}
           onRestartSimulation={() => startMockDefense(5)}
           onReturnToQuestionBank={() => {
             setActiveMode('estudo');
@@ -281,7 +316,12 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
         />
       ) : (
         /* MAIN WORKSTATION LAYOUT */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div
+          id="panel-defesa"
+          role="tabpanel"
+          aria-labelledby={activeMode === 'estudo' ? 'tab-estudo' : 'tab-simulador'}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start"
+        >
           {/* LEFT COLUMN: QUESTION BANK INDEX (Progressive Disclosure, Study Mode only) */}
           {activeMode === 'estudo' && (
             <>
@@ -338,7 +378,7 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               activeMode === 'estudo' ? 'lg:col-span-8' : 'max-w-3xl mx-auto w-full'
             } space-y-4`}
           >
-            {/* NÍVEL 3: PERGUNTA DA BANCA (Elemento Dominante) */}
+            {/* NÍVEL 3: PERGUNTA DA BANCA (Elemento Dominante com Navegação Superior) */}
             <DefenseQuestionViewer
               question={currentQuestion}
               totalQuestions={
@@ -349,6 +389,10 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               onPlaySpeech={onPlayQuickSpeech}
               questionLang={questionLang}
               currentLang={currentLang}
+              onPrevious={handlePreviousQuestion}
+              onNext={handleNextQuestion}
+              hasPrevious={hasPrevious}
+              hasNext={hasNext}
             />
 
             {/* NÍVEL 4 & 5: FOLHA DE RESPOSTA DO CANDIDATO E CRONÓMETRO */}
@@ -364,7 +408,7 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               currentLang={currentLang}
             />
 
-            {/* NÍVEL 6: AVALIAÇÃO, PARECER E RÉPLICA DA BANCA */}
+            {/* NÍVEL 6: GRELHA DE AUTO-VERIFICAÇÃO E RÉPLICA DA BANCA */}
             {activeFeedback && (
               <DefenseFeedbackView
                 question={currentQuestion}
@@ -376,17 +420,13 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               />
             )}
 
-            {/* NÍVEL 7: NAVEGAÇÃO ENTRE PERGUNTAS (Discreta, Funcional) */}
+            {/* NÍVEL 7: NAVEGAÇÃO COMPLEMENTAR INFERIOR ENTRE PERGUNTAS */}
             <div className="bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-3.5 flex items-center justify-between gap-3 text-xs">
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handlePreviousQuestion}
-                disabled={
-                  activeMode === 'simulador'
-                    ? mockIndex === 0
-                    : currentQuestionIndex === 0
-                }
+                disabled={!hasPrevious}
                 icon={<ArrowLeft className="w-3.5 h-3.5" />}
               >
                 {isPt ? 'Pergunta Anterior' : 'Previous Question'}

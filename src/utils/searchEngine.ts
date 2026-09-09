@@ -7,7 +7,14 @@ import {
   THESIS_METHODOLOGY_LAYERS,
   TOTAL_ESTIMATED_LOSSES_1994_2016,
 } from '../data/thesisModelData';
+import {
+  QUISSICO_BAIRROS_SPATIAL,
+  SCIENTIFIC_TREND_STATISTICS,
+  CHIRPS_CORRELATION_ANALYSIS,
+} from '../data/thesisScientificData';
 import { REAL_FIELD_PHOTOS } from '../data/fieldPhotos';
+import { FIELD_INTERVIEWS } from '../data/fieldInterviews';
+import { CROSS_EVIDENCE_ITEMS } from '../data/fieldCrossEvidence';
 import { DISSERTATION_FULL_QUESTIONS } from '../data/dissertationText';
 
 export type SearchResultCategory = 'todos' | 'dados' | 'campo' | 'metodologia' | 'defesa';
@@ -131,6 +138,66 @@ export function buildSearchIndex(): SearchResultItem[] {
     });
   });
 
+  // 3.1. 11 Bairros of Quissico (Tabela 7 da Dissertação)
+  QUISSICO_BAIRROS_SPATIAL.forEach((bairro) => {
+    const speech = `Bairro de ${bairro.name} no Posto Administrativo de Quissico. Grupo geográfico: ${bairro.zoneGroup}. No Modelo B com satélite Sentinel-2 Dynamic World detém ${bairro.dynamicWorldCropsSharePercent}% do cultivo agrícola, contra ${bairro.territorialSharePercent}% da área territorial administrativa no Modelo A. Altitude média SRTM de ${bairro.srtmAverageElevationM} metros, com ${bairro.srtmBelow9mPercent}% na cota inferior a 9 metros. ${bairro.agriculturalProfile} ${bairro.topographicRisk}`;
+
+    items.push({
+      id: `bairro_${bairro.id}`,
+      category: 'dados',
+      categoryLabel: 'Análise Espacial • Quissico',
+      badgeColor: 'emerald',
+      title: `Bairro ${bairro.name} (${bairro.zoneGroup}) • Quissico`,
+      subtitle: `${bairro.dynamicWorldCropsSharePercent}% colheita Sentinel-2 | ${bairro.territorialAreaHa.toLocaleString('pt-MZ')} ha`,
+      snippet: `Dynamic World: ${bairro.dynamicWorldCropsSharePercent}% | Territorial: ${bairro.territorialSharePercent}% | Alt. SRTM: ${bairro.srtmAverageElevationM}m (Cota < 9m: ${bairro.srtmBelow9mPercent}%) | Perfil: ${bairro.agriculturalProfile}`,
+      fullSpeechText: speech,
+      metadataBadges: [
+        bairro.name,
+        `${bairro.dynamicWorldCropsSharePercent}% DW`,
+        `${bairro.srtmAverageElevationM}m`,
+        bairro.zoneGroup
+      ],
+      targetTab: 'dados',
+      targetParam: 'espacial'
+    });
+  });
+
+  // 3.2. Scientific Trend Statistics (Hamed-Rao Mann-Kendall, Newey-West OLS, Log-linear, CAGR)
+  SCIENTIFIC_TREND_STATISTICS.forEach((stat) => {
+    items.push({
+      id: `trend_${stat.id}`,
+      category: 'dados',
+      categoryLabel: 'Estatística e Econometria',
+      badgeColor: 'blue',
+      title: `${stat.name}: ${stat.value}`,
+      subtitle: `${stat.metric} • ${stat.pValue || stat.period}`,
+      snippet: `${stat.methodology} | Interpretação: ${stat.interpretation} | Ref: ${stat.dissertationRef}`,
+      fullSpeechText: `${stat.name}. Valor apurado: ${stat.value}, significância ${stat.pValue || 'não aplicável'}. ${stat.interpretation} Metodologia: ${stat.methodology}. Referência na dissertação: ${stat.dissertationRef}.`,
+      metadataBadges: [
+        stat.value,
+        stat.pValue || '31 Anos',
+        stat.id.replace('stat_', '').toUpperCase()
+      ],
+      targetTab: 'dados',
+      targetParam: 'tendencia'
+    });
+  });
+
+  // 3.3. CHIRPS Correlation & 2023 Paradox
+  items.push({
+    id: 'chirps_correlation_summary',
+    category: 'dados',
+    categoryLabel: 'Clima e CHIRPS v2.0',
+    badgeColor: 'blue',
+    title: 'Correlação Chuva CHIRPS vs Produção: r = 0,057 (p = 0,762)',
+    subtitle: 'Ausência de causalidade linear estrita e o paradoxo de 2023 (+78,1% chuva, -87% safra)',
+    snippet: CHIRPS_CORRELATION_ANALYSIS.scientificCaveat,
+    fullSpeechText: CHIRPS_CORRELATION_ANALYSIS.scientificCaveat,
+    metadataBadges: ['r = 0,057', 'p = 0,762', 'Não-Causalidade', 'Anoxia Radicular'],
+    targetTab: 'dados',
+    targetParam: 'chirps'
+  });
+
   // 4. Real Field Photos (10 Photos uploaded by User)
   REAL_FIELD_PHOTOS.forEach((photo) => {
     const speech = `Fotografia de campo número ${photo.number}: ${photo.title}. Local: ${photo.location}, coordenadas ${photo.coords}. Descrição etnográfica: ${photo.description}. Detalhes técnicos observados: ${photo.technicalDetails.join(' ')}.`;
@@ -154,7 +221,54 @@ export function buildSearchIndex(): SearchResultItem[] {
     });
   });
 
-  // 5. 26 Dissertation Defense Questions & Answers
+  // 5. 77 Field Survey Interviews (Apêndice & Caderno de Campo)
+  FIELD_INTERVIEWS.forEach((intv) => {
+    const speech = `Inquérito de campo número ${intv.recordIndex}, folha física ${intv.pageNumber}. Produtor: ${intv.name}, ${intv.role} em ${intv.locality}, Quissico. Variedades de mandioca: ${intv.rawVarietiesText}. Tendência da produção: ${intv.productionTrend} devido a ${intv.trendCauses}. Pragas declaradas: ${intv.pestsAndDiseases}. Apoio: ${intv.institutionalSupport}.`;
+
+    items.push({
+      id: `intv_${intv.id}`,
+      category: 'campo',
+      categoryLabel: 'Caderno de Campo · Inquéritos',
+      badgeColor: intv.isLeaderQuestionnaire ? 'amber' : 'emerald',
+      title: `${intv.name} (${intv.role}) • ${intv.locality}`,
+      subtitle: `Folha Física ${intv.pageNumber} • Tempo de cultivo: ${intv.farmingYears}`,
+      snippet: `Variedades: ${intv.rawVarietiesText} | Tendência: ${intv.productionTrend} (${intv.trendCauses}) | Pragas: ${intv.pestsAndDiseases} | Apoio: ${intv.institutionalSupport}`,
+      fullSpeechText: speech,
+      metadataBadges: [
+        `Pág. ${intv.pageNumber}`,
+        intv.locality,
+        intv.productionTrend,
+        intv.role.split(' ')[0]
+      ],
+      targetTab: 'campo',
+      targetParam: intv.id
+    });
+  });
+
+  // 6. Methodological Cross-Evidence (Triangulation Nodes)
+  CROSS_EVIDENCE_ITEMS.forEach((ce) => {
+    const speech = `Triangulação metodológica da tese: ${ce.title}. Categoria: ${ce.themeCategory}. Tipo de relação: ${ce.relationshipType}. Referência: ${ce.dissertationReference}. Citação de campo: ${ce.participantVoiceExcerpt}. Interpretação: ${ce.analyticalInterpretation}.`;
+
+    items.push({
+      id: `cross_${ce.id}`,
+      category: 'metodologia',
+      categoryLabel: 'Evidência Cruzada (Triangulação)',
+      badgeColor: ce.relationshipType === 'Relação confirmada' ? 'emerald' : 'amber',
+      title: `Triangulação: ${ce.title}`,
+      subtitle: `${ce.relationshipType} • ${ce.dissertationChapter}`,
+      snippet: `Voz do Participante: "${ce.participantVoiceExcerpt}" | Observação: ${ce.fieldObservationExcerpt} | Interpretação: ${ce.analyticalInterpretation}`,
+      fullSpeechText: speech,
+      metadataBadges: [
+        ce.relationshipType,
+        ce.themeCategory,
+        ce.dissertationChapter.split(' ')[0]
+      ],
+      targetTab: 'campo',
+      targetParam: ce.id
+    });
+  });
+
+  // 7. 26 Dissertation Defense Questions & Answers
   DISSERTATION_FULL_QUESTIONS.forEach((q) => {
     items.push({
       id: `defesa_${q.id}`,

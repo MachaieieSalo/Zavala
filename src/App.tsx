@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header, AppViewTab } from './components/Header';
-import { ImageCarousel } from './components/ImageCarousel';
+import { FieldNotebookView } from './components/field/FieldNotebookView';
 import { ThesisContext } from './components/common/ThesisContext';
 import { PageHeader } from './components/common/PageHeader';
 import { Button } from './components/common/Button';
@@ -61,6 +61,7 @@ export default function App() {
 
   // Deep linking targets from search
   const [targetPhotoId, setTargetPhotoId] = useState<string | undefined>(undefined);
+  const [targetFieldSubTab, setTargetFieldSubTab] = useState<'registos' | 'entrevistas' | 'evidencia'>('registos');
   const [targetYear, setTargetYear] = useState<number | undefined>(undefined);
 
   // Audio synthesis state
@@ -280,7 +281,16 @@ export default function App() {
   const handleNavigateFromSearch = (tab: AppViewTab, param?: string | number) => {
     if (tab === 'campo') {
       if (typeof param === 'string') {
-        setTargetPhotoId(param);
+        if (param.startsWith('intv_') || param.startsWith('entrevista_')) {
+          setTargetFieldSubTab('entrevistas');
+        } else if (param.startsWith('cross_') || param.startsWith('cruz_')) {
+          setTargetFieldSubTab('evidencia');
+        } else {
+          setTargetFieldSubTab('registos');
+          setTargetPhotoId(param);
+        }
+      } else {
+        setTargetFieldSubTab('registos');
       }
       setCurrentTab('campo');
     } else if (tab === 'dados') {
@@ -478,16 +488,6 @@ export default function App() {
               description={currentLang === 'pt'
                 ? 'Simulação de arguição e preparação das respostas à banca.'
                 : 'Defense examination simulation and argument preparation.'}
-              actions={
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentTab('estudio')}
-                  icon={<ArrowRight className="w-3.5 h-3.5" />}
-                >
-                  {currentLang === 'pt' ? 'Ir para o Estúdio' : 'Go to Studio'}
-                </Button>
-              }
             />
 
             <SectionSelector
@@ -500,35 +500,26 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: GALERIA DE CAMPO (Apêndice D) */}
+        {/* TAB: CADERNO DIGITAL DE EVIDÊNCIA DE CAMPO */}
         {currentTab === 'campo' && (
-          <div className="space-y-4">
-            <PageHeader
-              context={currentLang === 'pt' ? 'CADERNO DE CAMPO (APÊNDICE D)' : 'FIELD RECORDS (APPENDIX D)'}
-              title={currentLang === 'pt' ? 'Registo Fotográfico e Espacial de Zavala' : 'Photographic & Spatial Field Records'}
-              description={currentLang === 'pt'
-                ? 'Documentação visual da colheita de mandioca, solo arenoso, encharcamento e infraestrutura agrícola nos 11 bairros.'
-                : 'Visual documentation of cassava harvest, sandy soils, waterlogging, and agricultural infrastructure across 11 villages.'}
-            />
-
-            <ImageCarousel
-              onSelectPhotoText={handleSelectQuestionText}
-              onPlayQuickSpeech={handleQuickBrowserSpeech}
-              initialPhotoId={targetPhotoId}
-              currentLang={currentLang}
-            />
-          </div>
+          <FieldNotebookView
+            onSelectPhotoText={handleSelectQuestionText}
+            onPlayQuickSpeech={handleQuickBrowserSpeech}
+            initialPhotoId={targetPhotoId}
+            initialSubTab={targetFieldSubTab}
+            currentLang={currentLang}
+          />
         )}
 
-        {/* TAB: TABELAS E DADOS OFICIAIS */}
+        {/* TAB: ESTAÇÃO CIENTÍFICA DE DADOS */}
         {currentTab === 'dados' && (
           <div className="space-y-4">
             <PageHeader
-              context={currentLang === 'pt' ? 'ESTATÍSTICA E MODELAGEM' : 'STATISTICS & MODELING'}
-              title={currentLang === 'pt' ? 'Série Histórica e Tabelas do Modelo (1994–2024)' : 'Historical Time Series & Model Tables'}
+              context={currentLang === 'pt' ? 'CONTEXTO TEMPORAL: 1994–2024' : 'TIME HORIZON: 1994–2024'}
+              title={currentLang === 'pt' ? 'Dados' : 'Data'}
               description={currentLang === 'pt'
-                ? 'Série temporal de 31 anos, perdas cumulativas (547.224 t), pressupostos econométricos e camadas metodológicas.'
-                : '31-year time series, cumulative losses (547,224 t), econometric assumptions, and methodological layers.'}
+                ? 'Série histórica, tendência, choques e heterogeneidade espacial de Zavala (1994–2024).'
+                : 'Historical series, trend, shocks, and spatial heterogeneity of Zavala (1994–2024).'}
             />
 
             <ThesisDataView
