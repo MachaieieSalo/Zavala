@@ -136,34 +136,35 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 text-xs">
-          <div className="p-2.5 bg-[#F4EFE6]/70 rounded-[2px] border border-[#D9CDAF]/60">
-            <span className="text-[10px] font-mono text-[#4F5C48] block">{isPt ? 'Formulários Transcritos' : 'Transcribed Forms'}</span>
-            <span className="text-lg font-bold font-mono text-[#1A2417]">{stats.total}</span>
+        {/* Flat Editorial Metrics Row (Anti-card nesting) */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-y-4 pt-3 text-xs sm:divide-x sm:divide-[#D9CDAF]/80">
+          <div className="pr-3 space-y-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Formulários Transcritos' : 'Transcribed Forms'}</span>
+            <span className="text-xl font-bold font-mono text-[#1A2417] block">{stats.total}</span>
             <span className="text-[10px] text-[#4F5C48] block">{isPt ? '64 com inquérito integral' : '64 with full survey'}</span>
           </div>
 
-          <div className="p-2.5 bg-[#F4EFE6]/70 rounded-[2px] border border-[#D9CDAF]/60">
-            <span className="text-[10px] font-mono text-[#4F5C48] block">{isPt ? 'Povoados Rurais' : 'Rural Villages'}</span>
-            <span className="text-lg font-bold font-mono text-[#1A2417]">{localities.length}</span>
+          <div className="sm:px-3 space-y-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Povoados Rurais' : 'Rural Villages'}</span>
+            <span className="text-xl font-bold font-mono text-[#1A2417] block">{localities.length}</span>
             <span className="text-[10px] text-[#4F5C48] block">Quissico, Canetane, Massava</span>
           </div>
 
-          <div className="p-2.5 bg-[#F4EFE6]/70 rounded-[2px] border border-[#D9CDAF]/60">
-            <span className="text-[10px] font-mono text-[#4F5C48] block">{isPt ? 'Produtoras (Mulheres)' : 'Female Farmers'}</span>
-            <span className="text-lg font-bold font-mono text-[#354D2C]">{stats.femaleCount}</span>
+          <div className="sm:px-3 space-y-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Produtoras (Mulheres)' : 'Female Farmers'}</span>
+            <span className="text-xl font-bold font-mono text-[#354D2C] block">{stats.femaleCount}</span>
             <span className="text-[10px] text-[#4F5C48] block">{isPt ? '60,3% da amostra' : '60.3% of sample'}</span>
           </div>
 
-          <div className="p-2.5 bg-[#F4EFE6]/70 rounded-[2px] border border-[#D9CDAF]/60">
-            <span className="text-[10px] font-mono text-[#4F5C48] block">{isPt ? 'Produtores (Homens)' : 'Male Farmers'}</span>
-            <span className="text-lg font-bold font-mono text-[#1A2417]">{stats.maleCount}</span>
+          <div className="sm:px-3 space-y-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Produtores (Homens)' : 'Male Farmers'}</span>
+            <span className="text-xl font-bold font-mono text-[#1A2417] block">{stats.maleCount}</span>
             <span className="text-[10px] text-[#4F5C48] block">{isPt ? '39,7% da amostra' : '39.7% of sample'}</span>
           </div>
 
-          <div className="p-2.5 bg-[#F4EFE6]/70 rounded-[2px] border border-[#D9CDAF]/60 col-span-2 sm:col-span-1">
-            <span className="text-[10px] font-mono text-[#4F5C48] block">{isPt ? 'Líderes Comunitários' : 'Community Leaders'}</span>
-            <span className="text-lg font-bold font-mono text-[#A8531E]">{stats.leadersCount}</span>
+          <div className="sm:pl-3 space-y-0.5 col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Líderes Comunitários' : 'Community Leaders'}</span>
+            <span className="text-xl font-bold font-mono text-[#A8531E] block">{stats.leadersCount}</span>
             <span className="text-[10px] text-[#4F5C48] block">{isPt ? 'Inquérito institucional' : 'Institutional survey'}</span>
           </div>
         </div>

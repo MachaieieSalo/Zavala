@@ -322,25 +322,28 @@ export const FieldInterviewDetailModal: React.FC<FieldInterviewDetailModalProps>
 
         {/* Modal Footer with Actions */}
         <div className="px-5 py-3 border-t border-[#D9CDAF] bg-[#F4EFE6] flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-mono text-[#4F5C48] uppercase tracking-wider mr-1">
+              {isPt ? 'Síntese Estruturada Automática:' : 'Automated Structured Synthesis:'}
+            </span>
             <button
               type="button"
               onClick={handleSpeechClick}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] border border-[#D9CDAF] bg-[#FCFAF6] text-[#1A2417] hover:bg-[#EAE2D2] text-xs font-medium cursor-pointer transition-colors"
-              title={isPt ? 'Ouvir síntese por voz' : 'Listen to quick speech'}
+              title={isPt ? 'Ouvir síntese vocal automatizada do inquérito' : 'Listen to automated voice summary'}
             >
               <Volume2 className="w-3.5 h-3.5 text-[#354D2C]" />
-              <span>{isPt ? 'Ouvir Resumo' : 'Listen'}</span>
+              <span>{isPt ? 'Ouvir Síntese' : 'Listen Summary'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleSendStudioClick}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] bg-[#1A2417] text-[#FCFAF6] hover:bg-[#354D2C] text-xs font-medium cursor-pointer transition-colors shadow-xs"
-              title={isPt ? 'Carregar texto completo no Estúdio' : 'Load into Studio'}
+              title={isPt ? 'Carregar síntese estruturada no Estúdio' : 'Load structured synthesis into Studio'}
             >
               <FileText className="w-3.5 h-3.5 text-[#D9CDAF]" />
-              <span>{isPt ? 'Enviar ao Estúdio' : 'Send to Studio'}</span>
+              <span>{isPt ? 'Enviar Síntese ao Estúdio' : 'Send Synthesis to Studio'}</span>
             </button>
           </div>
 

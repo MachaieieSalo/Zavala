@@ -314,12 +314,12 @@ export default function App() {
     }
   };
 
-  const handleSendToStudio = (newText: string) => {
+  const handleSendToStudio = (newText: string, title?: string) => {
     setText(newText);
-    setCurrentLoadedTitle('Registo da Dissertação');
+    setCurrentLoadedTitle(title || (currentLang === 'pt' ? 'Registo da Dissertação' : 'Dissertation Record'));
     setSelectedQuestionId(null);
     setCurrentTab('estudio');
-    showToast('Texto carregado no Estúdio de Voz!');
+    showToast(currentLang === 'pt' ? 'Texto carregado no Estúdio de Voz!' : 'Text loaded into Voice Studio!');
     if (textInputRef.current) {
       textInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -529,15 +529,15 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: PESQUISA GLOBAL (Dados e Fotos) */}
+        {/* TAB: ÍNDICE DE CONSULTA CRUZADA DA DISSERTAÇÃO */}
         {currentTab === 'pesquisa' && (
           <div className="space-y-4">
             <PageHeader
-              context={currentLang === 'pt' ? 'ÍNDICE REMISSIVO E BUSCA' : 'INDEX & SEARCH'}
-              title={currentLang === 'pt' ? 'Motor de Pesquisa Integrada' : 'Integrated Search Engine'}
+              context={currentLang === 'pt' ? 'ÍNDICE REMISSIVO DA DISSERTAÇÃO' : 'DISSERTATION CROSS-INDEX'}
+              title={currentLang === 'pt' ? 'Índice de Consulta Cruzada' : 'Cross-Reference Index'}
               description={currentLang === 'pt'
-                ? 'Consulta cruzada em textos da dissertação, questões de banca, anos agrícolas e registos de campo.'
-                : 'Cross-query across dissertation texts, defense questions, crop years, and field records.'}
+                ? 'Localização e cruzamento sistemático entre séries estatísticas, choques, registos etnográficos e arguição oral da dissertação.'
+                : 'Systematic localization and cross-referencing across statistical series, shocks, ethnographic records, and oral defense arguments.'}
             />
 
             <GlobalSearchEngineView

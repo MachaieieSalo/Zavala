@@ -222,70 +222,57 @@ export const FieldCrossEvidenceView: React.FC<FieldCrossEvidenceViewProps> = ({
                 </div>
               </div>
 
-              {/* Four Epistemological Layers Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                {/* Camada 1: Voz do Participante */}
-                <div className="p-3.5 bg-[#F4EFE6]/70 border border-[#D9CDAF] rounded-[2px] space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#A8531E] font-semibold flex items-center gap-1.5">
-                      <Quote className="w-3.5 h-3.5" />
-                      <span>{isPt ? '1. Voz do Participante (Declarações Literais)' : '1. Participant Voice (Literal Statements)'}</span>
-                    </span>
-                    <p className="text-xs sm:text-sm italic font-display text-[#1A2417] leading-relaxed pt-1">
-                      {item.participantVoiceExcerpt}
-                    </p>
-                  </div>
-                  <span className="text-[10px] text-[#4F5C48] font-mono block pt-2 border-t border-[#D9CDAF]/50">
-                    {isPt ? 'Fonte: Inquéritos a camponeses de Quissico' : 'Source: Farmer surveys in Quissico'}
+              {/* Four Epistemological Layers - Flat Editorial Dossier (Anti-card nesting) */}
+              <div className="space-y-4 text-xs">
+                {/* Camada 1: Voz do Participante (Citação Literal / Blockquote) */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#A8531E] font-semibold flex items-center gap-1.5">
+                    <Quote className="w-3.5 h-3.5" />
+                    <span>{isPt ? '1. Voz do Participante (Declarações Literais dos Camponeses)' : '1. Participant Voice (Literal Peasant Statements)'}</span>
                   </span>
+                  <blockquote className="pl-3.5 py-1 border-l-2 border-[#A8531E] bg-[#F4EFE6]/40">
+                    <p className="text-sm italic font-serif text-[#1A2417] leading-relaxed">
+                      “{item.participantVoiceExcerpt}”
+                    </p>
+                    <cite className="block text-[10px] text-[#4F5C48] font-mono mt-1 not-italic">
+                      {isPt ? '— Inquéritos presenciais a produtores de Zavala (Apêndice B)' : '— Field interviews with Zavala farmers (Appendix B)'}
+                    </cite>
+                  </blockquote>
                 </div>
 
-                {/* Camada 2: Observação de Campo */}
-                <div className="p-3.5 bg-[#F4EFE6]/70 border border-[#D9CDAF] rounded-[2px] space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#354D2C] font-semibold flex items-center gap-1.5">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>{isPt ? '2. Observação de Campo da Investigadora' : '2. Researcher Field Observation'}</span>
-                    </span>
-                    <p className="text-xs text-[#1A2417] leading-relaxed pt-1">
-                      {item.fieldObservationExcerpt}
-                    </p>
-                  </div>
-                  <span className="text-[10px] text-[#4F5C48] font-mono block pt-2 border-t border-[#D9CDAF]/50">
-                    {isPt ? 'Fonte: Notas etnográficas e registo fotográfico in-situ' : 'Source: Ethnographic notes & photographic record'}
+                {/* Camada 2: Observação de Campo da Investigadora */}
+                <div className="p-3 bg-[#EAE2D2]/30 border-l-2 border-[#354D2C] space-y-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#354D2C] font-semibold flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{isPt ? '2. Registo de Observação In-Situ da Investigadora' : '2. Researcher In-Situ Field Observation'}</span>
+                  </span>
+                  <p className="text-xs text-[#1A2417] leading-relaxed">
+                    {item.fieldObservationExcerpt}
+                  </p>
+                  <span className="text-[10px] text-[#4F5C48] font-mono block pt-1 border-t border-[#D9CDAF]/40">
+                    {isPt ? 'Fonte: Notas etnográficas e registo fotográfico em Quissico' : 'Source: Ethnographic notes & photo record in Quissico'}
                   </span>
                 </div>
 
                 {/* Camada 3: Interpretação Analítica na Tese */}
-                <div className="p-3.5 bg-[#FCFAF6] border border-[#D9CDAF] rounded-[2px] space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#1A2417] font-semibold flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-[#354D2C]" />
-                      <span>{isPt ? '3. Interpretação Analítica & Econométrica' : '3. Analytical & Econometric Interpretation'}</span>
-                    </span>
-                    <p className="text-xs text-[#4F5C48] leading-relaxed pt-1">
-                      {item.analyticalInterpretation}
-                    </p>
-                  </div>
-                  <span className="text-[10px] text-[#4F5C48] font-mono block pt-2 border-t border-[#D9CDAF]/50">
-                    {isPt ? 'Dissertação de Mestrado de Yolanda Tamele' : 'Yolanda Tamele Masters Dissertation'}
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#1A2417] font-semibold flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-[#354D2C]" />
+                    <span>{isPt ? '3. Interpretação Analítica & Econométrica' : '3. Analytical & Econometric Interpretation'}</span>
                   </span>
+                  <p className="text-xs sm:text-sm text-[#4F5C48] leading-relaxed">
+                    {item.analyticalInterpretation}
+                  </p>
                 </div>
 
-                {/* Camada 4: Base Empírica e Quantitativa */}
-                <div className="p-3.5 bg-[#FCFAF6] border border-[#D9CDAF] rounded-[2px] space-y-2 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] font-semibold flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#A8531E]" />
-                      <span>{isPt ? '4. Base Empírica e Dados Amostrais' : '4. Empirical Base & Sample Data'}</span>
-                    </span>
-                    <p className="text-xs text-[#1A2417] font-medium leading-relaxed pt-1">
-                      {item.empiricalBasis}
-                    </p>
+                {/* Camada 4: Base Empírica e Dados Amostrais */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#D9CDAF]/60 text-[11px] font-mono text-[#4F5C48]">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#A8531E]" />
+                    <span className="font-semibold text-[#1A2417]">{isPt ? 'Base Empírica:' : 'Empirical Base:'}</span>
+                    <span>{item.empiricalBasis}</span>
                   </div>
-                  <span className="text-[10px] text-[#4F5C48] font-mono block pt-2 border-t border-[#D9CDAF]/50">
-                    {isPt ? 'Amostra de 64 formulários e série de 31 anos' : 'Sample of 64 forms and 31-year series'}
-                  </span>
+                  <span>{isPt ? 'Amostra de 64 inquéritos e 31 anos' : 'Sample of 64 surveys and 31 years'}</span>
                 </div>
               </div>
 

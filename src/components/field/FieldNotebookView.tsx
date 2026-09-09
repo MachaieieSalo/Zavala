@@ -42,11 +42,12 @@ export const FieldNotebookView: React.FC<FieldNotebookViewProps> = ({
     <div className="space-y-6">
       {/* Editorial Page Header */}
       <PageHeader
-        title={isPt ? 'Caderno Digital de Evidência de Campo' : 'Digital Field Evidence Notebook'}
-        subtitle={
+        context={isPt ? 'CADERNO DIGITAL DE CAMPO' : 'DIGITAL FIELD NOTEBOOK'}
+        title={isPt ? 'Caderno de Campo' : 'Field Notebook'}
+        description={
           isPt
-            ? 'Triangulação empírica da dissertação de Yolanda Tamele: Apêndice D, 51 páginas de inquéritos e registos etnográficos in-situ em Zavala.'
-            : 'Empirical triangulation of Yolanda Tamele dissertation: Appendix D, 51 pages of farmer surveys, and in-situ ethnographic records in Zavala.'
+            ? 'Triangulação empírica da dissertação: Apêndice D, 51 páginas de inquéritos a camponeses e registos etnográficos in-situ em Zavala.'
+            : 'Empirical triangulation of the dissertation: Appendix D, 51 pages of farmer surveys, and in-situ ethnographic records in Zavala.'
         }
       />
 
