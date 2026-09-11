@@ -249,7 +249,7 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
                   : 'text-[#4F5C48] hover:text-[#1A2417]'
               }`}
             >
-              {isPt ? 'Modo Estudo (60 Perguntas)' : 'Study Mode (60 Questions)'}
+              {isPt ? `Modo Estudo (${DISSERTATION_FULL_QUESTIONS.length} Perguntas)` : `Study Mode (${DISSERTATION_FULL_QUESTIONS.length} Questions)`}
             </button>
             <button
               id="tab-simulador"
@@ -336,8 +336,8 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
                     <ListFilter className="w-4 h-4 text-[#354D2C]" />
                     <span>
                       {isPt
-                        ? `Pergunta Atual: #${currentQuestion.number < 10 ? `0${currentQuestion.number}` : currentQuestion.number} (Ver Índice de 60)`
-                        : `Current Question: #${currentQuestion.number} (View 60 Index)`}
+                        ? `Pergunta Atual: #${currentQuestion.number < 10 ? `0${currentQuestion.number}` : currentQuestion.number} (Ver Índice de ${DISSERTATION_FULL_QUESTIONS.length})`
+                        : `Current Question: #${currentQuestion.number} (View ${DISSERTATION_FULL_QUESTIONS.length} Index)`}
                     </span>
                   </div>
                   <span className="text-[#354D2C]">

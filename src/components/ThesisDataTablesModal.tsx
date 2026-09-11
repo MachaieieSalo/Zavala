@@ -6,6 +6,15 @@ import {
   CloudLightning,
   FileSpreadsheet,
 } from 'lucide-react';
+import {
+  QUISSICO_BAIRROS_SPATIAL,
+  THESIS_CORE_FACTS,
+  SCIENTIFIC_TREND_STATISTICS,
+} from '../data/thesisScientificData';
+import {
+  THESIS_CLIMATE_IMPACT_LOSSES,
+  TOTAL_ESTIMATED_LOSSES_1994_2016,
+} from '../data/thesisModelData';
 
 interface ThesisDataTablesModalProps {
   isOpen: boolean;
@@ -74,7 +83,7 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
             }`}
           >
             <MapPin className="w-3.5 h-3.5" />
-            <span>Tabela 7: 11 Bairros de Quissico</span>
+            <span>Tabela 7: {THESIS_CORE_FACTS.spatialBairrosCount} Bairros de Quissico ({THESIS_CORE_FACTS.spatialAreaQuissicoHa.toLocaleString('pt-MZ')} ha)</span>
           </button>
 
           <button
@@ -97,9 +106,9 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 rounded-lg bg-[#F2E9D8]/40 border border-[#DDD0B4] text-xs text-[#1F2A1A] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span>
-                  <strong>Perda Acumulada em 31 Anos:</strong> 717.751 toneladas (equivalente a 5,4 anos de colheita média distrital).
+                  <strong>Perda Acumulada no Período Modelado (1994–2016):</strong> {TOTAL_ESTIMATED_LOSSES_1994_2016.toLocaleString('pt-MZ')} toneladas em {THESIS_CORE_FACTS.adverseYearsCountModeled} anos de choques climáticos documentados.
                 </span>
-                <span className="font-mono text-[#5B7B4F] font-bold">14 anos adversos (45,2%)</span>
+                <span className="font-mono text-[#5B7B4F] font-bold">14 anos adversos (60,9% dos 23 anos modelados)</span>
               </div>
 
               <div className="overflow-x-auto border border-[#DDD0B4] rounded-lg">
@@ -115,64 +124,79 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#DDD0B4]/60 font-mono text-xs text-[#1F2A1A]">
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A]">1994</td>
-                      <td className="p-3 font-sans">Recuperação pós-guerra civil (1977-1992)</td>
-                      <td className="p-3 text-right">52.164</td>
-                      <td className="p-3 text-right text-[#B5651D]">10.836</td>
-                      <td className="p-3 text-right">17,2%</td>
-                      <td className="p-3 text-center text-[#5C6B52] font-semibold">MODERADO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20 bg-[#B5651D]/5">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2000</td>
-                      <td className="p-3 font-sans">Cheias históricas e ciclones regionais (CHIRPS +76,3%)</td>
-                      <td className="p-3 text-right">37.327</td>
-                      <td className="p-3 text-right text-[#B5651D] font-bold">46.292</td>
-                      <td className="p-3 text-right font-bold text-[#B5651D]">55,4%</td>
-                      <td className="p-3 text-center text-[#B5651D] font-bold">CRÍTICO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20 bg-[#B5651D]/5">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2007</td>
-                      <td className="p-3 font-sans">Ciclone Favio (Cat. 4, proximidade ~219,8 km de Zavala)</td>
-                      <td className="p-3 text-right">41.677</td>
-                      <td className="p-3 text-right text-[#B5651D] font-bold">74.902</td>
-                      <td className="p-3 text-right font-bold text-[#B5651D]">64,3%</td>
-                      <td className="p-3 text-center text-[#B5651D] font-bold">CRÍTICO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2008</td>
-                      <td className="p-3 font-sans">Recuperação pós-Favio (perda de ramas e estacas de plantio)</td>
-                      <td className="p-3 text-right">70.534</td>
-                      <td className="p-3 text-right text-[#B5651D]">51.921</td>
-                      <td className="p-3 text-right">42,4%</td>
-                      <td className="p-3 text-center text-[#B5651D] font-semibold">SEVERO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20 bg-[#B5651D]/5">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2016</td>
-                      <td className="p-3 font-sans">Seca extrema El Niño (CHIRPS sazonal -45,5%)</td>
-                      <td className="p-3 text-right">89.818</td>
-                      <td className="p-3 text-right text-[#B5651D] font-bold">131.628</td>
-                      <td className="p-3 text-right font-bold text-[#B5651D]">59,4%</td>
-                      <td className="p-3 text-center text-[#B5651D] font-bold">CRÍTICO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20 bg-[#B5651D]/10 border-t-2 border-[#B5651D]/30">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2023</td>
-                      <td className="p-3 font-sans">Colapso de produção (CHIRPS +78,1% de anomalia)</td>
-                      <td className="p-3 text-right font-bold text-[#1F2A1A]">35.371</td>
-                      <td className="p-3 text-right text-[#B5651D] font-bold">438.447</td>
-                      <td className="p-3 text-right font-bold text-[#B5651D]">92,5%</td>
-                      <td className="p-3 text-center text-[#B5651D] font-bold">CRÍTICO</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A]">2024</td>
-                      <td className="p-3 font-sans">Recuperação pós-colapso em curso (dados SDAE)</td>
-                      <td className="p-3 text-right">48.573</td>
-                      <td className="p-3 text-right text-[#5B7B4F] font-bold">+37,3% vs 2023</td>
-                      <td className="p-3 text-right">-</td>
-                      <td className="p-3 text-center text-[#5B7B4F] font-semibold">RECUP. PARCIAL</td>
-                    </tr>
+                    {THESIS_CLIMATE_IMPACT_LOSSES.map((row) => {
+                      const isCritical = row.lossPercent >= 50;
+                      const isSevere = row.lossPercent >= 25 && row.lossPercent < 50;
+                      const isObserved = row.year >= 2017;
+                      const isNegative = row.lossTonnes < 0;
+
+                      return (
+                        <tr
+                          key={row.year}
+                          className={`hover:bg-[#F2E9D8]/20 ${
+                            isCritical ? 'bg-[#B5651D]/5' : ''
+                          } ${row.year === 2023 ? 'border-t-2 border-[#B5651D]/30' : ''}`}
+                        >
+                          <td className="p-3 font-bold text-[#1F2A1A]">{row.year}</td>
+                          <td className="p-3 font-sans">
+                            {row.event}
+                            {isObserved && (
+                              <span className="ml-1.5 text-[10px] font-mono px-1 py-0.5 rounded bg-[#5B7B4F]/15 text-[#3F5837]">
+                                OBSERVADO
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-right font-bold">
+                            {Math.round(row.actualProdTonnes).toLocaleString('pt-MZ')}
+                          </td>
+                          <td
+                            className={`p-3 text-right font-bold ${
+                              isNegative
+                                ? 'text-[#5B7B4F]'
+                                : isCritical
+                                ? 'text-[#B5651D]'
+                                : 'text-[#7D6B42]'
+                            }`}
+                          >
+                            {isNegative
+                              ? `+${Math.abs(Math.round(row.lossTonnes)).toLocaleString('pt-MZ')}`
+                              : Math.round(row.lossTonnes).toLocaleString('pt-MZ')}
+                          </td>
+                          <td
+                            className={`p-3 text-right font-bold ${
+                              isNegative
+                                ? 'text-[#5B7B4F]'
+                                : isCritical
+                                ? 'text-[#B5651D]'
+                                : 'text-[#7D6B42]'
+                            }`}
+                          >
+                            {isNegative
+                              ? `+${Math.abs(row.lossPercent).toFixed(1).replace('.', ',')}%`
+                              : `${row.lossPercent.toFixed(1).replace('.', ',')}%`}
+                          </td>
+                          <td className="p-3 text-center">
+                            {isNegative ? (
+                              <span className="text-[#5B7B4F] font-semibold text-[11px]">RECUP. PARCIAL</span>
+                            ) : isCritical ? (
+                              <span className="text-[#B5651D] font-bold text-[11px]">CRÍTICO</span>
+                            ) : isSevere ? (
+                              <span className="text-[#B5651D] font-semibold text-[11px]">SEVERO</span>
+                            ) : (
+                              <span className="text-[#5C6B52] font-semibold text-[11px]">MODERADO</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Methodological Caveat Banner */}
+              <div className="p-3 bg-[#FFFDF8] border-l-3 border-[#5B7B4F] border-y border-r border-[#DDD0B4] rounded-[2px] text-[11px] text-[#5C6B52] leading-relaxed">
+                <strong className="text-[#1F2A1A] block font-semibold">Princípio Epistemológico:</strong>
+                Associação temporal não implica causalidade. Os 14 anos adversos documentam a coocorrência histórica entre choques climáticos (CHIRPS, INGD) e quebras de colheita, devendo a sua causalidade agroeconómica ser compreendida na interação com a vulnerabilidade edáfica dos solos arenosos de Zavala.
               </div>
             </div>
           )}
@@ -181,7 +205,7 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 rounded-lg bg-[#F2E9D8]/40 border border-[#DDD0B4] text-xs text-[#1F2A1A]">
                 <p>
-                  <strong>Posto Administrativo de Quissico:</strong> 11 bairros cartografados totalizando 22.343 hectares. O Modelo B utiliza o sinal agrícola da classe <em>crops</em> do Dynamic World (Sentinel-2 a 10 m, percentil P75) entre 2016 e 2024.
+                  <strong>Posto Administrativo de Quissico:</strong> {THESIS_CORE_FACTS.spatialBairrosCount} bairros cartografados totalizando {THESIS_CORE_FACTS.spatialAreaQuissicoHa.toLocaleString('pt-MZ')} hectares ({THESIS_CORE_FACTS.spatialTotalMappedPolygonsHa.toLocaleString('pt-MZ')} ha de polígonos mapeados). O Modelo B utiliza o sinal agrícola da classe <em>crops</em> do Dynamic World (Sentinel-2 a 10 m, percentil P75) entre 2016 e 2024.
                 </p>
               </div>
 
@@ -191,6 +215,7 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
                     <tr className="bg-[#F2E9D8]/60 text-[#5C6B52] text-[11px] font-mono border-b border-[#DDD0B4]">
                       <th className="p-3">Bairro</th>
                       <th className="p-3">Grupo Zonal</th>
+                      <th className="p-3 text-right">Área (ha)</th>
                       <th className="p-3 text-right">Territorial (%)</th>
                       <th className="p-3 text-right">ESA CCI 1994-15 (%)</th>
                       <th className="p-3 text-right">Dynamic World 2016-24 (%)</th>
@@ -198,94 +223,49 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#DDD0B4]/60 font-mono text-xs text-[#1F2A1A]">
-                    <tr className="hover:bg-[#F2E9D8]/20 bg-[#5B7B4F]/5">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Nzile</td>
-                      <td className="p-3 font-sans text-[#5B7B4F] font-semibold">Costeiro</td>
-                      <td className="p-3 text-right">26,8%</td>
-                      <td className="p-3 text-right">11,1%</td>
-                      <td className="p-3 text-right font-bold text-[#5B7B4F]">16,6%</td>
-                      <td className="p-3 font-sans text-[#B5651D] font-bold">66% &lt; 9m altitude (elev. média 12,4m)</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Zavalene</td>
-                      <td className="p-3 font-sans text-[#3F5837] font-semibold">Interior</td>
-                      <td className="p-3 text-right">11,6%</td>
-                      <td className="p-3 text-right">16,5%</td>
-                      <td className="p-3 text-right font-bold text-[#5B7B4F]">13,6%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Interior seguro contra ressacas</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Dombe</td>
-                      <td className="p-3 font-sans text-[#5B7B4F] font-semibold">Costeiro</td>
-                      <td className="p-3 text-right">8,9%</td>
-                      <td className="p-3 text-right">11,8%</td>
-                      <td className="p-3 text-right font-bold text-[#5B7B4F]">13,4%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Planalto costeiro &gt; 100m elevação</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Nhamajal</td>
-                      <td className="p-3 font-sans text-[#3F5837] font-semibold">Interior</td>
-                      <td className="p-3 text-right">9,8%</td>
-                      <td className="p-3 text-right">13,7%</td>
-                      <td className="p-3 text-right">10,5%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Área produtiva interiorana</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Nhacodue</td>
-                      <td className="p-3 font-sans text-[#B5651D] font-semibold">Intermédio</td>
-                      <td className="p-3 text-right">6,8%</td>
-                      <td className="p-3 text-right">7,2%</td>
-                      <td className="p-3 text-right">9,0%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Transição ecológica</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Macomane</td>
-                      <td className="p-3 font-sans text-[#B5651D] font-semibold">Intermédio</td>
-                      <td className="p-3 text-right">10,6%</td>
-                      <td className="p-3 text-right">6,3%</td>
-                      <td className="p-3 text-right">8,0%</td>
-                      <td className="p-3 font-sans text-[#B5651D]">50,8% &lt; 9m altitude</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Nhangave</td>
-                      <td className="p-3 font-sans text-[#5B7B4F] font-semibold">Costeiro</td>
-                      <td className="p-3 text-right">7,2%</td>
-                      <td className="p-3 text-right">8,3%</td>
-                      <td className="p-3 text-right">7,6%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Faixa litorânea consorciada</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Mahumane</td>
-                      <td className="p-3 font-sans text-[#B5651D] font-semibold">Intermédio</td>
-                      <td className="p-3 text-right">5,1%</td>
-                      <td className="p-3 text-right">7,0%</td>
-                      <td className="p-3 text-right">6,5%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Área agrária intermédia</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Ngomene</td>
-                      <td className="p-3 font-sans text-[#3F5837] font-semibold">Interior</td>
-                      <td className="p-3 text-right">5,9%</td>
-                      <td className="p-3 text-right">8,0%</td>
-                      <td className="p-3 text-right">5,9%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Maneio familiar</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Ticongolo</td>
-                      <td className="p-3 font-sans text-[#5B7B4F] font-semibold">Costeiro</td>
-                      <td className="p-3 text-right">4,2%</td>
-                      <td className="p-3 text-right">5,6%</td>
-                      <td className="p-3 text-right">4,7%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Elevação média &gt; 100m</td>
-                    </tr>
-                    <tr className="hover:bg-[#F2E9D8]/20">
-                      <td className="p-3 font-bold text-[#1F2A1A] font-sans">Muinhe</td>
-                      <td className="p-3 font-sans text-[#3F5837] font-semibold">Interior</td>
-                      <td className="p-3 text-right">3,0%</td>
-                      <td className="p-3 text-right">4,3%</td>
-                      <td className="p-3 text-right">4,3%</td>
-                      <td className="p-3 font-sans text-[#5C6B52]">Menor extensão territorial</td>
-                    </tr>
+                    {QUISSICO_BAIRROS_SPATIAL.map((bairro) => {
+                      const isCosteiro = bairro.zoneGroup === 'Costeiro';
+                      const isInterior = bairro.zoneGroup === 'Interior';
+
+                      return (
+                        <tr
+                          key={bairro.id}
+                          className={`hover:bg-[#F2E9D8]/20 ${
+                            bairro.name === 'Nzile' ? 'bg-[#5B7B4F]/5 font-semibold' : ''
+                          }`}
+                        >
+                          <td className="p-3 font-bold text-[#1F2A1A] font-sans">{bairro.name}</td>
+                          <td
+                            className={`p-3 font-sans font-semibold ${
+                              isCosteiro
+                                ? 'text-[#5B7B4F]'
+                                : isInterior
+                                ? 'text-[#3F5837]'
+                                : 'text-[#B5651D]'
+                            }`}
+                          >
+                            {bairro.zoneGroup}
+                          </td>
+                          <td className="p-3 text-right">{bairro.territorialAreaHa.toLocaleString('pt-MZ')}</td>
+                          <td className="p-3 text-right">{bairro.territorialSharePercent.toFixed(1).replace('.', ',')}%</td>
+                          <td className="p-3 text-right">{bairro.esaCciSharePercent.toFixed(1).replace('.', ',')}%</td>
+                          <td className="p-3 text-right font-bold text-[#5B7B4F]">
+                            {bairro.dynamicWorldCropsSharePercent.toFixed(1).replace('.', ',')}%
+                          </td>
+                          <td className="p-3 font-sans text-xs">
+                            {bairro.srtmBelow9mPercent > 40 ? (
+                              <span className="text-[#B5651D] font-semibold">
+                                {bairro.srtmBelow9mPercent}% &lt; 9m alt. (média {bairro.srtmAverageElevationM}m)
+                              </span>
+                            ) : (
+                              <span className="text-[#5C6B52]">
+                                Média {bairro.srtmAverageElevationM}m ({bairro.topographicRisk})
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -293,33 +273,65 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
           )}
 
           {activeTab === 'estatisticas' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
-                  <p className="text-[#5C6B52] text-xs">Média Aritmética (1994-2024)</p>
-                  <p className="text-xl font-bold font-mono text-[#5B7B4F]">115.333 t</p>
+                  <p className="text-[#5C6B52] text-xs">Média Aritmética (1994–2024)</p>
+                  <p className="text-xl font-bold font-mono text-[#5B7B4F]">
+                    {THESIS_CORE_FACTS.averageProductionTonnes.toLocaleString('pt-MZ')} t
+                  </p>
+                  <p className="text-[10px] text-[#5C6B52]">31 anos da série distrital</p>
                 </div>
                 <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
-                  <p className="text-[#5C6B52] text-xs">Mediana</p>
-                  <p className="text-xl font-bold font-mono text-[#1F2A1A]">100.990 t</p>
+                  <p className="text-[#5C6B52] text-xs">Mediana da Série</p>
+                  <p className="text-xl font-bold font-mono text-[#1F2A1A]">
+                    {THESIS_CORE_FACTS.medianProductionTonnes.toLocaleString('pt-MZ')} t
+                  </p>
+                  <p className="text-[10px] text-[#5C6B52]">Robusta a assimetrias extremas</p>
                 </div>
                 <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
-                  <p className="text-[#5C6B52] text-xs">Desvio Padrão</p>
-                  <p className="text-xl font-bold font-mono text-[#B5651D]">64.965 t</p>
+                  <p className="text-[#5C6B52] text-xs">Desvio Padrão (s)</p>
+                  <p className="text-xl font-bold font-mono text-[#B5651D]">
+                    {THESIS_CORE_FACTS.standardDeviationTonnes.toLocaleString('pt-MZ')} t
+                  </p>
+                  <p className="text-[10px] text-[#5C6B52]">Dispersão elevada face à média</p>
                 </div>
                 <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
                   <p className="text-[#5C6B52] text-xs">Coeficiente de Variação (CV)</p>
-                  <p className="text-xl font-bold font-mono text-[#B5651D]">56,3%</p>
+                  <p className="text-xl font-bold font-mono text-[#B5651D]">
+                    {THESIS_CORE_FACTS.coefficientOfVariationPercent.toFixed(1).replace('.', ',')}%
+                  </p>
+                  <p className="text-[10px] text-[#5C6B52]">Alta volatilidade interanual</p>
                 </div>
-                <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
-                  <p className="text-[#5C6B52] text-xs">Teste de Normalidade Shapiro-Wilk</p>
-                  <p className="text-base font-bold font-mono text-[#1F2A1A]">W = 0,909 (p = 0,012)</p>
-                  <p className="text-[11px] text-[#5C6B52]">Rejeita normalidade clássica</p>
+              </div>
+
+              {/* Econometric Models Table */}
+              <div className="border border-[#DDD0B4] rounded-lg overflow-hidden">
+                <div className="p-3 bg-[#F2E9D8]/60 border-b border-[#DDD0B4] font-semibold text-xs text-[#1F2A1A]">
+                  Modelos de Tendência e Inferência Estatística
                 </div>
-                <div className="p-3.5 rounded-lg bg-[#F2E9D8]/30 border border-[#DDD0B4]">
-                  <p className="text-[#5C6B52] text-xs">Autocorrelação Serial (AC1 e AC2)</p>
-                  <p className="text-base font-bold font-mono text-[#1F2A1A]">AC1 = 0,695 | AC2 = 0,371</p>
-                  <p className="text-[11px] text-[#5C6B52]">Exige correcção Hamed-Rao &amp; Newey-West</p>
+                <div className="divide-y divide-[#DDD0B4]/60">
+                  {SCIENTIFIC_TREND_STATISTICS.map((stat) => (
+                    <div key={stat.id} className="p-3.5 space-y-1 text-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <span className="font-bold text-[#1F2A1A]">{stat.name}</span>
+                        <div className="flex items-center gap-2 font-mono">
+                          <span className="px-2 py-0.5 rounded bg-[#5B7B4F]/15 text-[#3F5837] font-bold">
+                            {stat.value}
+                          </span>
+                          {stat.pValue && (
+                            <span className="text-[11px] text-[#5C6B52]">
+                              ({stat.pValue})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[#5C6B52] text-[11px]">{stat.methodology}</p>
+                      <p className="text-[#1F2A1A] italic text-[11px] pt-0.5">
+                        &ldquo;{stat.interpretation}&rdquo;
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

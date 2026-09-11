@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { CROSS_EVIDENCE_ITEMS, CrossEvidenceItem } from '../../data/fieldCrossEvidence';
 import { REAL_FIELD_PHOTOS } from '../../data/fieldPhotos';
 import { FIELD_INTERVIEWS, FieldInterview } from '../../data/fieldInterviews';
+import { THESIS_CORE_FACTS } from '../../data/thesisScientificData';
 import { FieldInterviewDetailModal } from './FieldInterviewDetailModal';
 import {
   Layers,
@@ -272,7 +273,11 @@ export const FieldCrossEvidenceView: React.FC<FieldCrossEvidenceViewProps> = ({
                     <span className="font-semibold text-[#1A2417]">{isPt ? 'Base Empírica:' : 'Empirical Base:'}</span>
                     <span>{item.empiricalBasis}</span>
                   </div>
-                  <span>{isPt ? 'Amostra de 64 inquéritos e 31 anos' : 'Sample of 64 surveys and 31 years'}</span>
+                  <span>
+                    {isPt
+                      ? `Amostra de ${FIELD_INTERVIEWS.length} inquéritos e ${THESIS_CORE_FACTS.totalYears} anos`
+                      : `Sample of ${FIELD_INTERVIEWS.length} surveys and ${THESIS_CORE_FACTS.totalYears} years`}
+                  </span>
                 </div>
               </div>
 

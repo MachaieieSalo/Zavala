@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DISSERTATION_METADATA } from '../../data/dissertationText';
+import { THESIS_CORE_FACTS } from '../../data/thesisScientificData';
 import {
   ChevronDown,
   ChevronUp,
@@ -90,23 +91,23 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-2 border-y border-[#D9CDAF]/70 font-mono text-xs">
               <div>
                 <span className="text-[10px] text-[#4F5C48] font-sans block">{isPt ? 'Série' : 'Series'}</span>
-                <span className="font-bold text-[#1A2417]">31 {isPt ? 'Anos' : 'Years'}</span>
-                <span className="text-[10px] text-[#4F5C48] block">1994–2024</span>
+                <span className="font-bold text-[#1A2417]">{THESIS_CORE_FACTS.totalYears} {isPt ? 'Anos' : 'Years'}</span>
+                <span className="text-[10px] text-[#4F5C48] block">{THESIS_CORE_FACTS.initialYear}–{THESIS_CORE_FACTS.terminalYear}</span>
               </div>
               <div>
                 <span className="text-[10px] text-[#4F5C48] font-sans block">{isPt ? 'Média Anual' : 'Annual Average'}</span>
-                <span className="font-bold text-[#1A2417]">115.333 t</span>
-                <span className="text-[10px] text-[#354D2C] block">{isPt ? 'Pico 273k (2021)' : 'Peak 273k (2021)'}</span>
+                <span className="font-bold text-[#1A2417]">{THESIS_CORE_FACTS.averageProductionTonnes.toLocaleString('pt-MZ')} t</span>
+                <span className="text-[10px] text-[#354D2C] block">{isPt ? `Pico ${Math.round(THESIS_CORE_FACTS.peakProductionTonnes / 1000)}k (${THESIS_CORE_FACTS.peakYear})` : `Peak ${Math.round(THESIS_CORE_FACTS.peakProductionTonnes / 1000)}k (${THESIS_CORE_FACTS.peakYear})`}</span>
               </div>
               <div>
                 <span className="text-[10px] text-[#4F5C48] font-sans block">Mann-Kendall</span>
-                <span className="font-bold text-[#1A2417]">Z = 3,100</span>
-                <span className="text-[10px] text-[#4F5C48] block">p = 0,0019</span>
+                <span className="font-bold text-[#1A2417]">Z = {THESIS_CORE_FACTS.mannKendallZ.toFixed(3).replace('.', ',')}</span>
+                <span className="text-[10px] text-[#4F5C48] block">{THESIS_CORE_FACTS.mannKendallPValue}</span>
               </div>
               <div>
                 <span className="text-[10px] text-[#4F5C48] font-sans block">{isPt ? 'Volatilidade' : 'Volatility'}</span>
-                <span className="font-bold text-[#1A2417]">CV 56,3%</span>
-                <span className="text-[10px] text-[#A8531E] block">{isPt ? '14 choques' : '14 shocks'}</span>
+                <span className="font-bold text-[#1A2417]">CV {THESIS_CORE_FACTS.coefficientOfVariationPercent.toFixed(1).replace('.', ',')}%</span>
+                <span className="text-[10px] text-[#A8531E] block">{THESIS_CORE_FACTS.adverseYearsCountModeled} {isPt ? 'choques' : 'shocks'}</span>
               </div>
             </div>
           </div>
@@ -154,9 +155,9 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             {isPt ? 'Série Histórica' : 'Historical Series'}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono text-[#1A2417] block mt-0.5">
-            31 {isPt ? 'Anos' : 'Years'}
+            {THESIS_CORE_FACTS.totalYears} {isPt ? 'Anos' : 'Years'}
           </span>
-          <span className="text-[10px] text-[#4F5C48] font-mono">1994 a 2024</span>
+          <span className="text-[10px] text-[#4F5C48] font-mono">{THESIS_CORE_FACTS.initialYear} a {THESIS_CORE_FACTS.terminalYear}</span>
         </div>
 
         <div className="py-1.5 sm:py-0 sm:px-3">
@@ -164,10 +165,10 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             {isPt ? 'Média Anual' : 'Annual Average'}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono text-[#1A2417] block mt-0.5">
-            115.333 t
+            {THESIS_CORE_FACTS.averageProductionTonnes.toLocaleString('pt-MZ')} t
           </span>
           <span className="text-[10px] text-[#354D2C] font-mono font-medium">
-            {isPt ? 'Pico: 273k t (2021)' : 'Peak: 273k t (2021)'}
+            {isPt ? `Pico: ${Math.round(THESIS_CORE_FACTS.peakProductionTonnes / 1000)}k t (${THESIS_CORE_FACTS.peakYear})` : `Peak: ${Math.round(THESIS_CORE_FACTS.peakProductionTonnes / 1000)}k t (${THESIS_CORE_FACTS.peakYear})`}
           </span>
         </div>
 
@@ -176,9 +177,9 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             Mann-Kendall
           </span>
           <span className="text-base sm:text-lg font-bold font-mono text-[#1A2417] block mt-0.5">
-            Z = 3,100
+            Z = {THESIS_CORE_FACTS.mannKendallZ.toFixed(3).replace('.', ',')}
           </span>
-          <span className="text-[10px] text-[#4F5C48] font-mono">p = 0,0019 (p &lt; 0,01)</span>
+          <span className="text-[10px] text-[#4F5C48] font-mono">{THESIS_CORE_FACTS.mannKendallPValue} (p &lt; 0,01)</span>
         </div>
 
         <div className="py-1.5 sm:py-0 sm:px-3 last:pr-0">
@@ -186,10 +187,10 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             {isPt ? 'Volatilidade (CV)' : 'Volatility (CV)'}
           </span>
           <span className="text-base sm:text-lg font-bold font-mono text-[#1A2417] block mt-0.5">
-            56,3%
+            {THESIS_CORE_FACTS.coefficientOfVariationPercent.toFixed(1).replace('.', ',')}%
           </span>
           <span className="text-[10px] text-[#A8531E] font-mono font-medium">
-            {isPt ? '14 anos de choque' : '14 shock years'}
+            {THESIS_CORE_FACTS.adverseYearsCountModeled} {isPt ? 'anos de choque' : 'shock years'}
           </span>
         </div>
       </div>
@@ -231,8 +232,8 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
             </h4>
             <p>
               {isPt
-                ? 'A série apresenta tendência monotónica positiva de longo prazo (+3,20% a.a. na regressão log-linear), mas convive com 14 anos de choques severos (547.224 toneladas de perda acumulada). O aumento de produtividade não extinguiu o risco ambiental.'
-                : 'The series displays an upward long-term monotonic trend (+3.20% p.a. log-linear), yet suffered 14 severe shock years (547,224 tons cumulative loss). Increased productivity did not eliminate environmental vulnerability.'}
+                ? `A série apresenta tendência monotónica positiva de longo prazo (+3,20% a.a. na regressão log-linear), mas convive com ${THESIS_CORE_FACTS.adverseYearsCountModeled} anos de choques severos (${THESIS_CORE_FACTS.accumulatedLossesTonnes.toLocaleString('pt-MZ')} toneladas de perda acumulada no período modelado). O aumento de produtividade não extinguiu o risco ambiental.`
+                : `The series displays an upward long-term monotonic trend (+3.20% p.a. log-linear), yet suffered ${THESIS_CORE_FACTS.adverseYearsCountModeled} severe shock years (${THESIS_CORE_FACTS.accumulatedLossesTonnes.toLocaleString('en-US')} tons cumulative loss during modeled period). Increased productivity did not eliminate environmental vulnerability.`}
             </p>
           </div>
 

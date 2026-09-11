@@ -2066,9 +2066,11 @@ export const FIELD_INTERVIEWS: FieldInterview[] = [
 
 // Metadados estatísticos e metodológicos consolidados dos inquéritos
 export const FIELD_INTERVIEWS_METRICS = {
-  totalRecordsRecorded: 64, // 64 formulários preenchidos no documento
-  uniqueFarmersAndLeaders: 62, // descontando duplicação da pág 46 e re-entrada pág 47
-  communityLeaders: 4, // Castigo Raule Matimela, Felciano Germano Matimela, Feliciano Phaudiane Thite, Fastudo Pedro Gome
+  totalRecordsRecorded: 77, // 77 formulários transcritos correspondentes à totalidade das 51 páginas do caderno de campo
+  initialBatchTranscribedRecords: 64, // Lote preliminar inicial (páginas 1 a 42)
+  totalPhysicalNotebookPages: 51, // 51 páginas manuscritas no caderno original da investigadora
+  uniqueFarmersAndLeaders: 62, // Descontando duplicações e re-entradas
+  communityLeaders: 5, // Castigo Raule Matimela (p.4 e p.5), Felciano Germano Matimela (p.10), Feliciano Phaudiane Thite (p.15), Fastudo Pedro Gome (p.27)
   localitiesCovered: [
     'Massava',
     'Canetane- Zona Matinela',
@@ -2081,9 +2083,9 @@ export const FIELD_INTERVIEWS_METRICS = {
     'Mindu Quissico',
   ],
   genderDistribution: {
-    women: 38, // predomínio expressivo de mulheres chefes de machamba e camponesas
-    men: 25,
-    unspecifiedOrLeader: 1,
+    women: 44, // 61,1% das respostas individuais de agricultores
+    men: 28, // 38,9% das respostas individuais de agricultores
+    communityLeadersAndSpecial: 5,
   },
   commonVarieties: [
     'Tapioca',

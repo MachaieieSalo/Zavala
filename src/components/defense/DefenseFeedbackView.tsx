@@ -48,18 +48,18 @@ export const DefenseFeedbackView: React.FC<DefenseFeedbackViewProps> = ({
         <div className="border-b border-[#D9CDAF] pb-3 flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
           <div>
             <h3 className="text-xs uppercase tracking-wider font-bold text-[#1A2417]">
-              {isPt ? 'Grelha de Auto-Verificação' : 'Self-Verification Grid'}
+              {isPt ? 'Arguição Crítica · Auto-Verificação Editorial' : 'Critical Examination · Editorial Self-Verification'}
             </h3>
             <p className="text-xs text-[#4F5C48]">
               {isPt
-                ? 'Critérios que a sua resposta deve conseguir sustentar perante a banca.'
-                : 'Criteria that your answer must substantiate before the examination board.'}
+                ? 'Critérios que a sua resposta oral deve conseguir sustentar perante a banca examinadora.'
+                : 'Criteria that your oral answer must substantiate before the examination board.'}
             </p>
           </div>
-          <span className="text-[10px] text-[#4F5C48] italic self-start sm:self-auto">
+          <span className="text-[10px] text-[#4F5C48] italic self-start sm:self-auto max-w-xs sm:text-right">
             {isPt
-              ? 'Verificação orientadora de pontos-chave'
-              : 'Key-point guiding verification'}
+              ? 'Construção pedagógica da plataforma (não constitui classificação oficial da UEM/ESUDER)'
+              : 'Platform pedagogical construct (not an official UEM/ESUDER classification)'}
           </span>
         </div>
 

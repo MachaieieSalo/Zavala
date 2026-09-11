@@ -5,6 +5,10 @@ import { FieldCrossEvidenceView } from './FieldCrossEvidenceView';
 import { PageHeader } from '../common/PageHeader';
 import { Camera, FileText, Layers, BookOpen, Compass } from 'lucide-react';
 import { SupportedLang } from '../../data/translations';
+import { REAL_FIELD_PHOTOS } from '../../data/fieldPhotos';
+import { FIELD_INTERVIEWS } from '../../data/fieldInterviews';
+import { CROSS_EVIDENCE_ITEMS } from '../../data/fieldCrossEvidence';
+import { THESIS_CORE_FACTS } from '../../data/thesisScientificData';
 
 export type FieldSubTab = 'registos' | 'entrevistas' | 'evidencia';
 
@@ -46,8 +50,8 @@ export const FieldNotebookView: React.FC<FieldNotebookViewProps> = ({
         title={isPt ? 'Caderno de Campo' : 'Field Notebook'}
         description={
           isPt
-            ? 'Triangulação empírica da dissertação: Apêndice D, 51 páginas de inquéritos a camponeses e registos etnográficos in-situ em Zavala.'
-            : 'Empirical triangulation of the dissertation: Appendix D, 51 pages of farmer surveys, and in-situ ethnographic records in Zavala.'
+            ? `Triangulação empírica da dissertação: Apêndice D, ${THESIS_CORE_FACTS.fieldNotebookPagesCount} páginas de inquéritos a camponeses e registos etnográficos in-situ em Zavala.`
+            : `Empirical triangulation of the dissertation: Appendix D, ${THESIS_CORE_FACTS.fieldNotebookPagesCount} pages of farmer surveys, and in-situ ethnographic records in Zavala.`
         }
       />
 
@@ -68,7 +72,7 @@ export const FieldNotebookView: React.FC<FieldNotebookViewProps> = ({
         >
           <Camera className="w-3.5 h-3.5" />
           <span>{isPt ? 'Registos Fotográficos' : 'Photographic Records'}</span>
-          <span className="font-mono text-[10px] text-[#4F5C48]">(10)</span>
+          <span className="font-mono text-[10px] text-[#4F5C48]">({REAL_FIELD_PHOTOS.length})</span>
           {activeSubTab === 'registos' && (
             <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#354D2C]" />
           )}
@@ -85,7 +89,7 @@ export const FieldNotebookView: React.FC<FieldNotebookViewProps> = ({
         >
           <FileText className="w-3.5 h-3.5" />
           <span>{isPt ? 'Inquéritos e Entrevistas' : 'Surveys and Interviews'}</span>
-          <span className="font-mono text-[10px] text-[#4F5C48]">(64)</span>
+          <span className="font-mono text-[10px] text-[#4F5C48]">({FIELD_INTERVIEWS.length})</span>
           {activeSubTab === 'entrevistas' && (
             <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#354D2C]" />
           )}
@@ -102,7 +106,7 @@ export const FieldNotebookView: React.FC<FieldNotebookViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{isPt ? 'Evidência Cruzada' : 'Cross-Evidence'}</span>
-          <span className="font-mono text-[10px] text-[#4F5C48]">(7 nós)</span>
+          <span className="font-mono text-[10px] text-[#4F5C48]">({CROSS_EVIDENCE_ITEMS.length} {isPt ? 'nós' : 'nodes'})</span>
           {activeSubTab === 'evidencia' && (
             <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#354D2C]" />
           )}

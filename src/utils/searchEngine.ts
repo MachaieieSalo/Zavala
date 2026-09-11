@@ -232,19 +232,19 @@ export function buildSearchIndex(): SearchResultItem[] {
     categoryLabel: 'Choques Climáticos e Eventos Extremos',
     evidenceType: 'choque_climatico',
     evidenceTypeLabel: 'Agregado Cumulativo de Perdas',
-    title: `Perdas Totais Cumulativas por Choques Climáticos (1994–2016): 547.224 Toneladas`,
+    title: `Perdas Totais Cumulativas por Choques Climáticos (1994–2016): ${TOTAL_ESTIMATED_LOSSES_1994_2016.toLocaleString('pt-MZ')} Toneladas`,
     subtitle: 'Impacto agregado de secas, cheias e ciclones em Zavala documentado no modelo',
     dissertationLocation: 'Capítulo 4 · Síntese de Danos Agregados e Folha D',
     occurrenceContext: 'Totalização dos 23 anos de histórico de choques climáticos no distrito de Zavala',
-    snippet: `As perdas acumuladas somam 547.224 toneladas de mandioca em Zavala (1994–2016). Os maiores impactos foram o Ciclone Favio em 2007 (74.902 t), a seca severa de 2016 (131.627 t) e as cheias do ano 2000 (46.291 t).`,
+    snippet: `As perdas acumuladas somam ${TOTAL_ESTIMATED_LOSSES_1994_2016.toLocaleString('pt-MZ')} toneladas de mandioca em Zavala (1994–2016). Os maiores impactos foram o Ciclone Favio em 2007 (74.902 t), a seca severa de 2016 (131.627 t) e as cheias do ano 2000 (46.291 t).`,
     fullSpeechText: `O modelo de reconstituição econométrica da tese calculou que entre 1994 e 2016, as perdas totais cumulativas provocadas por choques climáticos em Zavala totalizaram quinhentas e quarenta e sete mil, duzentas e vinte e quatro toneladas de mandioca. Este volume representa mais de quatro safras anuais completas de colheita média distrital perdidas.`,
-    metadataBadges: ['547.224 t perdidas', '1994–2016', 'Folha D', 'Danos Cumulativos'],
+    metadataBadges: [`${TOTAL_ESTIMATED_LOSSES_1994_2016.toLocaleString('pt-MZ')} t perdidas`, '1994–2016', 'Folha D', 'Danos Cumulativos'],
     targetTab: 'dados',
     targetParam: 'choques',
     shockData: {
       year: 2016,
       eventName: 'Impacto Agregado de Choques (1994–2016)',
-      lossTonnes: 547224,
+      lossTonnes: TOTAL_ESTIMATED_LOSSES_1994_2016,
       lossPercent: 28.4,
       trendTonnes: 1926845,
       actualTonnes: 1379621,
@@ -287,6 +287,7 @@ export function buildSearchIndex(): SearchResultItem[] {
         photo.category,
         photo.location.split('•')[0].trim(),
         'Apêndice D',
+        ...(photo.tags || []),
       ],
       targetTab: 'campo',
       targetParam: photo.id,
@@ -314,7 +315,7 @@ export function buildSearchIndex(): SearchResultItem[] {
     });
   });
 
-  // 4. Field Interviews (64 Inquéritos Transcritos)
+  // 4. Field Interviews (Inquéritos Transcritos do Caderno de Campo)
   FIELD_INTERVIEWS.forEach((intv) => {
     const speech = `Inquérito de campo número ${intv.recordIndex}, folha física ${intv.pageNumber}. Produtor: ${intv.name}, ${intv.role} em ${intv.locality}, Quissico. Variedades de mandioca declaradas: ${intv.rawVarietiesText}. Tendência da produção: ${intv.productionTrend} devido a ${intv.trendCauses}. Pragas declaradas: ${intv.pestsAndDiseases}. Apoio institucional: ${intv.institutionalSupport}.`;
 
@@ -611,7 +612,10 @@ export function searchAppDatabase(
     }));
   }
 
-  const queryTerms = cleanQuery.split(/\s+/).filter(Boolean);
+  const rawTerms = cleanQuery.split(/\s+/).filter(Boolean);
+  const stopWords = new Set(['de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'e', 'a', 'o', 'as', 'os', 'um', 'uma', 't', 'ha']);
+  const meaningfulTerms = rawTerms.filter((t) => !stopWords.has(t));
+  const queryTerms = meaningfulTerms.length > 0 ? meaningfulTerms : rawTerms;
 
   const matched = baseList
     .map((item) => {
@@ -626,12 +630,21 @@ export function searchAppDatabase(
       let reason = 'Correspondência geral no texto';
 
       const matchesAllTerms = queryTerms.every((term) => {
-        const inTitle = titleLower.includes(term);
-        const inSubtitle = subtitleLower.includes(term);
-        const inLocation = locationLower.includes(term);
-        const inSnippet = snippetLower.includes(term);
-        const inSpeech = speechLower.includes(term);
-        const inBadges = badgesLower.includes(term);
+        // Support normalized number format (e.g. 547224 matching 547.224)
+        const altTerm = term.includes('.') ? term.replace(/\./g, '') : null;
+
+        const checkMatch = (target: string) => {
+          if (target.includes(term)) return true;
+          if (altTerm && target.replace(/\./g, '').includes(altTerm)) return true;
+          return false;
+        };
+
+        const inTitle = checkMatch(titleLower);
+        const inSubtitle = checkMatch(subtitleLower);
+        const inLocation = checkMatch(locationLower);
+        const inSnippet = checkMatch(snippetLower);
+        const inSpeech = checkMatch(speechLower);
+        const inBadges = checkMatch(badgesLower);
 
         if (inTitle) {
           score += 10;

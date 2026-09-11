@@ -3,6 +3,7 @@ import { Search, Check } from 'lucide-react';
 import {
   DissertationQuestion,
   DEFENSE_SCENARIOS,
+  DISSERTATION_FULL_QUESTIONS,
 } from '../../data/dissertationText';
 import { SupportedLang } from '../../data/translations';
 
@@ -69,7 +70,9 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
             className="w-full px-2.5 py-1.5 rounded-[4px] text-xs bg-[#FCFAF6] border border-[#D9CDAF] text-[#1A2417] focus-visible:outline-2 focus-visible:outline-[#2A3A24] font-sans cursor-pointer"
           >
             <option value="todos">
-              {isPt ? 'Todos os 7 Cenários (60 Perguntas)' : 'All 7 Scenarios (60 Questions)'}
+              {isPt
+                ? `Todos os ${DEFENSE_SCENARIOS.length} Cenários (${DISSERTATION_FULL_QUESTIONS.length} Perguntas)`
+                : `All ${DEFENSE_SCENARIOS.length} Scenarios (${DISSERTATION_FULL_QUESTIONS.length} Questions)`}
             </option>
             {DEFENSE_SCENARIOS.map((sc) => (
               <option key={sc.id} value={sc.id}>

@@ -669,6 +669,90 @@ export const SCIENTIFIC_TIME_SERIES: ScientificTimeSeriesPoint[] = [
   },
 ];
 
+// ============================================================================
+// METADADOS INSTITUCIONAIS E FONTE CANÓNICA DE VERDADE CIENTÍFICA (SSoT)
+// ============================================================================
+
+export const THESIS_METADATA = {
+  author: 'Eng.ª Yolanda Tamele',
+  institution: 'Universidade Eduardo Mondlane (UEM)',
+  school: 'Escola Superior de Desenvolvimento Rural (ESUDER)',
+  department: 'Departamento de Produção Agrária',
+  degree: 'Dissertação de Mestrado em Ciências (Desenvolvimento Rural)',
+  title: 'Dinâmica da Produção de Mandioca no Distrito de Zavala, Província de Inhambane (1994–2024): Tendências Estruturais, Volatilidade Climática e Heterogeneidade Espacial',
+  location: 'Zavala / Maputo, Moçambique',
+  year: 2026,
+  defenseMonth: 'Agosto de 2026',
+};
+
+export const THESIS_CORE_FACTS = {
+  // Parâmetros Temporais
+  totalYears: 31,
+  timeSeriesPeriod: '1994–2024',
+  modeledPeriod: '1994–2016 (23 anos)',
+  observedPeriod: '2017–2024 (8 anos)',
+  initialYear: 1994,
+  initialProductionTonnes: 52164,
+  terminalYear: 2024,
+  terminalProductionTonnes: 48573,
+  peakYear: 2021,
+  peakProductionTonnes: 273773,
+  minimumYear: 2023,
+  minimumProductionTonnes: 35371,
+
+  // Estatística Descritiva
+  averageProductionTonnes: 115333,
+  medianProductionTonnes: 100990,
+  standardDeviationTonnes: 64965,
+  coefficientOfVariationPercent: 56.3,
+
+  // Modelos Econométricos e Testes Estatísticos
+  olsSlopeTonnesYear: 4229,
+  olsPValue: 0.020,
+  olsR2: 0.174,
+  mannKendallZ: 3.100,
+  mannKendallPValue: 0.0019,
+  mannKendallMethod: 'Hamed & Rao (1998) com correcção de autocorrelação serial',
+  logLinearGrowthPercent: 3.20,
+  logLinearPValue: 0.014,
+  logLinearR2: 0.171,
+  cagrPercent: -0.24, // Determinado pelos extremos 1994 (52.164 t) e 2024 (48.573 t)
+
+  // Clima e Precipitação CHIRPS
+  chirpsRainfallCorrelation: 0.057,
+  chirpsPValue: 0.762,
+  chirpsCausalInterpretation: 'Virtualmente nula / estatisticamente não-significativa (não-linearidade da mandioca)',
+
+  // Choques Biofísicos e Perdas Acumuladas
+  accumulatedLossesTonnes: 547224, // Perdas modeladas no período 1994-2016
+  accumulatedLossesPeriod: '1994–2016',
+  adverseYearsCountModeled: 14, // 14 anos adversos em 23 anos modelados
+  adverseYearsCountTotal: 15, // Incluindo 2023 (Ciclone Freddy) na série total de 31 anos
+
+  // Dimensão Espacial (Posto Administrativo de Quissico)
+  spatialAreaQuissicoHa: 22343,
+  spatialBairrosCount: 11,
+  spatialTotalMappedPolygonsHa: 22320, // Soma exata dos 11 polígonos cartografados (99,9% da área do posto)
+
+  // Trabalho de Campo Empírico
+  fieldNotebookPagesCount: 51,
+  fieldTranscribedFormsCount: 77,
+};
+
+export const SCIENTIFIC_SUMMARY_METRICS = { ...THESIS_CORE_FACTS };
+
+export const THESIS_FIELD_DATA_SUMMARY = {
+  totalNotebookPages: 51,
+  totalTranscribedQuestionnaireForms: 77,
+  reconciliationNote: '77 formulários transcritos correspondentes à totalidade das 51 páginas físicas do caderno de campo. A contagem preliminar anterior de 64 formulários cobria as primeiras 42 páginas transcritas.',
+  uniqueFarmersAndLeaders: 62,
+  communityLeadersCount: 5,
+  femaleProportionPercent: 61.1,
+  maleProportionPercent: 38.9,
+  localitiesCount: 8,
+  realPhotographsCount: 10,
+};
+
 // 2. INDICADORES ESTATÍSTICOS E MODELOS DE TENDÊNCIA
 export const SCIENTIFIC_TREND_STATISTICS: TrendStatisticItem[] = [
   {

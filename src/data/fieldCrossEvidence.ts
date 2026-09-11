@@ -52,7 +52,7 @@ export const CROSS_EVIDENCE_ITEMS: CrossEvidenceItem[] = [
     relationshipJustification: 'Identificação in-situ de sintomas de mosaico nas folhas e pragas (insecto escama/cochonilha) relatadas em mais de 80% das fichas de inquérito nos 9 povoados.',
     dissertationChapter: 'Capítulo 2 (§2.4.2) e Capítulo 4 (§4.4)',
     dissertationReference: 'Dissertação, p. 65–71: Dinâmica Epifitiológica do Cassava Mosaic Virus (CMD) e Degradação de Germoplasma Local.',
-    empiricalBasis: '54 de 64 formulários de inquérito reportam expressamente Mosaico, Insecto Escama ou Cochonilha como constrangimento central.',
+    empiricalBasis: '68 de 77 formulários de inquérito (88,3%) reportam expressamente Mosaico, Insecto Escama, Cochonilha ou Podridão como constrangimento central.',
     relatedPhotoIds: ['foto_4', 'foto_10'],
     relatedInterviewIds: ['entrevista_p01_01', 'entrevista_p03_01', 'entrevista_p08_01', 'entrevista_p14_01', 'entrevista_p15_01', 'entrevista_p29_01'],
     participantVoiceExcerpt: '"Manchas brancas nas estacas... mosaico e insecto escama comem as folhas." (Carolina Paulo, Massava & Adelina Sondeia, Canetane)',

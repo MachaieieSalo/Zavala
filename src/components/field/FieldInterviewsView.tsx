@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { FIELD_INTERVIEWS, FieldInterview } from '../../data/fieldInterviews';
+import { THESIS_CORE_FACTS } from '../../data/thesisScientificData';
 import { FieldInterviewDetailModal } from './FieldInterviewDetailModal';
 import {
   Search,
@@ -63,6 +64,7 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
         }
         if (selectedRole === 'MALE') {
           const r = item.role.toLowerCase();
+          if (r.includes('produtora') || r.includes('agricultora') || r.includes('camponesa')) return false;
           if (!r.includes('produtor') && !r.includes('agricultor') && !r.includes('camponês')) return false;
         }
       }
@@ -101,12 +103,20 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
     }).length;
     const maleCount = FIELD_INTERVIEWS.filter((i) => {
       const r = i.role.toLowerCase();
-      return r.includes('produtor') || r.includes('agricultor') || r.includes('camponês');
+      return (
+        !r.includes('produtora') &&
+        !r.includes('agricultora') &&
+        !r.includes('camponesa') &&
+        (r.includes('produtor') || r.includes('agricultor') || r.includes('camponês'))
+      );
     }).length;
-    const leadersCount = FIELD_INTERVIEWS.filter((i) => i.isLeaderQuestionnaire).length;
+    const leadersCount = FIELD_INTERVIEWS.filter((i) => i.isLeaderQuestionnaire || i.role.toLowerCase().includes('líder')).length;
     const decreasedCount = FIELD_INTERVIEWS.filter((i) => i.productionTrend.toLowerCase().includes('diminuiu')).length;
+    const totalFarmers = femaleCount + maleCount;
+    const femalePct = totalFarmers > 0 ? ((femaleCount / totalFarmers) * 100).toFixed(1).replace('.', ',') : '61,1';
+    const malePct = totalFarmers > 0 ? ((maleCount / totalFarmers) * 100).toFixed(1).replace('.', ',') : '38,9';
 
-    return { total, femaleCount, maleCount, leadersCount, decreasedCount };
+    return { total, femaleCount, maleCount, leadersCount, decreasedCount, femalePct, malePct };
   }, []);
 
   const hasActiveFilters = searchQuery !== '' || selectedLocality !== 'ALL' || selectedRole !== 'ALL' || selectedTrend !== 'ALL';
@@ -132,7 +142,7 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
             </h3>
           </div>
           <div className="text-xs text-[#4F5C48] sm:text-right font-mono">
-            <span>{isPt ? 'Amostra Fiel das 51 Páginas do Caderno Original' : 'Faithful Sample of 51 Pages of Original Notebook'}</span>
+            <span>{isPt ? `${THESIS_CORE_FACTS.fieldNotebookPagesCount} Páginas Físicas do Caderno Original da Investigadora` : `${THESIS_CORE_FACTS.fieldNotebookPagesCount} Physical Pages of Researcher Original Notebook`}</span>
           </div>
         </div>
 
@@ -141,7 +151,7 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
           <div className="pr-3 space-y-0.5">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Formulários Transcritos' : 'Transcribed Forms'}</span>
             <span className="text-xl font-bold font-mono text-[#1A2417] block">{stats.total}</span>
-            <span className="text-[10px] text-[#4F5C48] block">{isPt ? '64 com inquérito integral' : '64 with full survey'}</span>
+            <span className="text-[10px] text-[#4F5C48] block">{isPt ? `${THESIS_CORE_FACTS.fieldNotebookPagesCount} páginas de caderno` : `${THESIS_CORE_FACTS.fieldNotebookPagesCount} notebook pages`}</span>
           </div>
 
           <div className="sm:px-3 space-y-0.5">
@@ -153,13 +163,13 @@ export const FieldInterviewsView: React.FC<FieldInterviewsViewProps> = ({
           <div className="sm:px-3 space-y-0.5">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Produtoras (Mulheres)' : 'Female Farmers'}</span>
             <span className="text-xl font-bold font-mono text-[#354D2C] block">{stats.femaleCount}</span>
-            <span className="text-[10px] text-[#4F5C48] block">{isPt ? '60,3% da amostra' : '60.3% of sample'}</span>
+            <span className="text-[10px] text-[#4F5C48] block">{stats.femalePct}% {isPt ? 'dos produtores' : 'of farmers'}</span>
           </div>
 
           <div className="sm:px-3 space-y-0.5">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F5C48] block">{isPt ? 'Produtores (Homens)' : 'Male Farmers'}</span>
             <span className="text-xl font-bold font-mono text-[#1A2417] block">{stats.maleCount}</span>
-            <span className="text-[10px] text-[#4F5C48] block">{isPt ? '39,7% da amostra' : '39.7% of sample'}</span>
+            <span className="text-[10px] text-[#4F5C48] block">{stats.malePct}% {isPt ? 'dos produtores' : 'of farmers'}</span>
           </div>
 
           <div className="sm:pl-3 space-y-0.5 col-span-2 sm:col-span-1">

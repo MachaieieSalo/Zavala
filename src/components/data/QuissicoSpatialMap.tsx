@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   QUISSICO_BAIRROS_SPATIAL,
   QuissicoBairroSpatial,
+  THESIS_CORE_FACTS,
 } from '../../data/thesisScientificData';
 import {
   MapPin,
@@ -101,9 +102,9 @@ export const QuissicoSpatialMap: React.FC<QuissicoSpatialMapProps> = ({
         </div>
 
         <div className="text-xs text-[#4F5C48] flex items-center gap-1 font-mono">
-          <span>Escopo: 11 Bairros de Quissico</span>
+          <span>Escopo: {THESIS_CORE_FACTS.spatialBairrosCount} Bairros de Quissico</span>
           <span>•</span>
-          <span>22.343 ha</span>
+          <span>{THESIS_CORE_FACTS.spatialAreaQuissicoHa.toLocaleString('pt-MZ')} ha</span>
         </div>
       </div>
 
@@ -115,7 +116,7 @@ export const QuissicoSpatialMap: React.FC<QuissicoSpatialMapProps> = ({
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-[#354D2C]" />
               <span className="text-xs font-bold text-[#1A2417] uppercase tracking-wider font-mono">
-                Esquema Cartográfico dos 11 Bairros de Quissico
+                Esquema Cartográfico dos {THESIS_CORE_FACTS.spatialBairrosCount} Bairros de Quissico
               </span>
             </div>
             <span className="text-[10px] font-mono text-[#4F5C48]">
@@ -127,13 +128,13 @@ export const QuissicoSpatialMap: React.FC<QuissicoSpatialMapProps> = ({
             </span>
           </div>
 
-          {/* SVG Map of the 11 Bairros */}
+          {/* SVG Map of the Bairros */}
           <div className="relative w-full aspect-[5/3] bg-[#EAE2D2]/30 rounded-[2px] border border-[#D9CDAF]/60 p-2 flex items-center justify-center overflow-hidden">
             <svg
               viewBox="0 0 500 270"
               className="w-full h-full select-none"
               role="img"
-              aria-label="Mapa esquemático dos 11 bairros do Posto Administrativo de Quissico"
+              aria-label={`Mapa esquemático dos ${THESIS_CORE_FACTS.spatialBairrosCount} bairros do Posto Administrativo de Quissico`}
             >
               {/* Coastline indication */}
               <path

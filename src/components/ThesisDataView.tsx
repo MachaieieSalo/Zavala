@@ -6,6 +6,7 @@ import {
   DATA_SOURCES_REGISTRY,
   SCIENTIFIC_LIMITATIONS,
   ScientificTimeSeriesPoint,
+  THESIS_CORE_FACTS,
 } from '../data/thesisScientificData';
 import { ScientificChart } from './data/ScientificChart';
 import { ScientificTable } from './data/ScientificTable';
@@ -37,7 +38,9 @@ interface ThesisDataViewProps {
 export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
   onSendToStudio,
   highlightYear,
+  currentLang = 'pt',
 }) => {
+  const isPt = currentLang === 'pt';
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
   const [selectedYear, setSelectedYear] = useState<number>(highlightYear || 2023);
   const [activeSection, setActiveSection] = useState<string>('serie');
@@ -63,7 +66,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
     <div className="space-y-6">
       {/* 1. Internal Sticky Section Navigator */}
       <nav
-        aria-label="Navegação interna da estação de dados"
+        aria-label={isPt ? 'Navegação interna da estação de dados' : 'Data station internal navigation'}
         className="sticky top-2 z-20 bg-[#FCFAF6]/95 backdrop-blur-sm p-1.5 rounded-[4px] border border-[#D9CDAF] shadow-xs flex items-center justify-between gap-1 overflow-x-auto text-xs"
       >
         <div className="flex items-center gap-1 shrink-0">
@@ -76,7 +79,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            1. Como Ler
+            {isPt ? '1. Como Ler' : '1. How to Read'}
           </button>
           <button
             type="button"
@@ -87,7 +90,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            2. Série (1994–2024)
+            {isPt ? '2. Série (1994–2024)' : '2. Series (1994–2024)'}
           </button>
           <button
             type="button"
@@ -98,7 +101,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            3. Tendência
+            {isPt ? '3. Tendência' : '3. Trend'}
           </button>
           <button
             type="button"
@@ -109,7 +112,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#A8531E] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            4. Choques
+            {isPt ? '4. Choques' : '4. Shocks'}
           </button>
           <button
             type="button"
@@ -120,7 +123,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            5. Clima (CHIRPS)
+            {isPt ? '5. Clima (CHIRPS)' : '5. Climate (CHIRPS)'}
           </button>
           <button
             type="button"
@@ -131,7 +134,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#354D2C] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            6. Espacial (Quissico)
+            {isPt ? '6. Espacial (Quissico)' : '6. Spatial (Quissico)'}
           </button>
           <button
             type="button"
@@ -142,7 +145,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            7. Incerteza
+            {isPt ? '7. Incerteza' : '7. Uncertainty'}
           </button>
           <button
             type="button"
@@ -153,7 +156,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 : 'text-[#4F5C48] hover:text-[#1A2417] hover:bg-[#EAE2D2]/50'
             }`}
           >
-            8. Fontes
+            {isPt ? '8. Fontes' : '8. Sources'}
           </button>
         </div>
 
@@ -166,10 +169,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 ? 'bg-[#354D2C] text-[#FCFAF6]'
                 : 'text-[#4F5C48] hover:text-[#1A2417]'
             }`}
-            title="Visualização em Gráfico Temporal"
+            title={isPt ? 'Visualização em Gráfico Temporal' : 'Time Series Chart View'}
           >
             <LineChart className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Gráfico</span>
+            <span className="hidden md:inline">{isPt ? 'Gráfico' : 'Chart'}</span>
           </button>
           <button
             type="button"
@@ -179,10 +182,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
                 ? 'bg-[#354D2C] text-[#FCFAF6]'
                 : 'text-[#4F5C48] hover:text-[#1A2417]'
             }`}
-            title="Visualização em Tabela Científica"
+            title={isPt ? 'Visualização em Tabela Científica' : 'Scientific Table View'}
           >
             <TableIcon className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Tabela</span>
+            <span className="hidden md:inline">{isPt ? 'Tabela' : 'Table'}</span>
           </button>
         </div>
       </nav>
@@ -233,10 +236,10 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
 
           <div className="p-3 bg-[#EAE2D2]/30 rounded-[2px] border border-[#D9CDAF]/60 space-y-1">
             <span className="font-mono text-[10px] uppercase font-bold text-[#354D2C] block">
-              4. 11 Bairros de Quissico
+              4. {THESIS_CORE_FACTS.spatialBairrosCount} Bairros de Quissico
             </span>
             <p className="text-[#1A2417] leading-relaxed text-[11px]">
-              A análise espacial de alta resolução (22.343 ha) circunscreve-se ao Posto de Quissico, confrontando a área territorial com o sinal agrícola Sentinel-2 Dynamic World.
+              A análise espacial de alta resolução ({THESIS_CORE_FACTS.spatialAreaQuissicoHa.toLocaleString('pt-MZ')} ha) circunscreve-se ao Posto de Quissico, confrontando a área territorial com o sinal agrícola Sentinel-2 Dynamic World.
             </p>
           </div>
         </div>
@@ -358,7 +361,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
             </h3>
           </div>
           <span className="text-[11px] font-mono text-[#A8531E] font-bold">
-            14 Anos Adversos · 547.224 t Perdidas (1994–2016)
+            {THESIS_CORE_FACTS.adverseYearsCountModeled} Anos Adversos · {THESIS_CORE_FACTS.accumulatedLossesTonnes.toLocaleString('pt-MZ')} t Perdidas (1994–2016)
           </span>
         </div>
 
@@ -551,7 +554,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
               </h3>
             </div>
             <p className="text-xs text-[#4F5C48] mt-0.5">
-              11 bairros cartografados · 22.343 hectares · Sentinel-2 Dynamic World P75 vs Modelo Territorial.
+              {THESIS_CORE_FACTS.spatialBairrosCount} bairros cartografados · {THESIS_CORE_FACTS.spatialAreaQuissicoHa.toLocaleString('pt-MZ')} hectares · Sentinel-2 Dynamic World P75 vs Modelo Territorial.
             </p>
           </div>
         </div>

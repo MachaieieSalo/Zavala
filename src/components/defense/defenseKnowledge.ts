@@ -33,8 +33,8 @@ const SCENARIO_REPLICAS: Record<string, { pt: string; en: string }> = {
     en: 'Given cassava brown streak disease (CBSD) pressure and root necrosis, what criterion did you apply in the model to separate physiological drought loss from phytosanitary damage caused by infected cuttings?',
   },
   cenario_clima: {
-    pt: 'Considerando que 547.224 toneladas foram perdidas em 31 anos sob 14 anos adversos, até que ponto a precipitação CHIRPS reflete a microfísica de chuvas convectivas costeiras em Quissico?',
-    en: 'Given that 547,224 tons were lost over 31 years across 14 adverse years, to what extent does CHIRPS precipitation capture coastal convective micro-rainfall regimes in Quissico?',
+    pt: 'Considerando que 547.224 toneladas foram perdidas no período modelado (1994–2016) sob 14 anos adversos, até que ponto a precipitação CHIRPS reflete a microfísica de chuvas convectivas costeiras em Quissico?',
+    en: 'Given that 547,224 tons were lost during the modeled period (1994–2016) across 14 adverse years, to what extent does CHIRPS precipitation capture coastal convective micro-rainfall regimes in Quissico?',
   },
   cenario_espacial: {
     pt: 'A classificação de uso do solo com Sentinel-2 e SRTM identifica áreas de encharcamento em Nzile. Como validou no terreno a fronteira exata entre dunas costeiras arenosas e depressões hidromórficas?',

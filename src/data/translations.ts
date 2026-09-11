@@ -177,11 +177,11 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     },
     field: {
       title: 'Galeria Etnográfica e Agronómica de Campo',
-      subtitle: '10 registos autênticos do Apêndice D em Zavala e Posto Administrativo de Quissico',
+      subtitle: 'Registos autênticos do Apêndice D em Zavala e Posto Administrativo de Quissico',
       uploadTitle: 'Carregar Fotografias Reais de Campo',
-      uploadDesc: 'Selecione ou arraste os seus 10 ficheiros reais (.jpeg/.png) para substituir as fichas de catálogo.',
+      uploadDesc: 'Selecione ou arraste os seus ficheiros reais (.jpeg/.png) para substituir as fichas de catálogo.',
       btnSelectFiles: 'Selecionar Ficheiros Reais',
-      dropzoneText: 'Arraste as suas 10 fotografias reais para aqui ou clique para selecionar',
+      dropzoneText: 'Arraste as suas fotografias reais para aqui ou clique para selecionar',
       authenticBadge: 'Registo do Apêndice D',
       originalFile: 'Ficheiro Original',
       location: 'Localização',
@@ -211,7 +211,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     },
     search: {
       title: 'Motor de Pesquisa Global da Dissertação',
-      subtitle: 'Pesquise simultaneamente na série de 31 anos, nas 10 fotos reais de campo e nas 60 perguntas da defesa.',
+      subtitle: 'Pesquise simultaneamente na série histórica, nas fotos reais de campo e nas perguntas da defesa.',
       inputPlaceholder: 'Pesquisar anos, choques, fotos de campo, termos técnicos ou perguntas...',
       allResults: 'Todos os Registos',
       dataResults: 'Dados 1994–2024',
@@ -325,7 +325,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     },
     search: {
       title: 'Global Dissertation Search Engine',
-      subtitle: 'Search simultaneously across the 31-year dataset, 10 authentic field photos, and 60 defense questions.',
+      subtitle: 'Search simultaneously across the historical time series, authentic field photos, and defense questions.',
       inputPlaceholder: 'Search years, climate shocks, field photos, technical terms, or defense questions...',
       allResults: 'All Records',
       dataResults: '1994–2024 Data',

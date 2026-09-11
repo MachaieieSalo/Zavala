@@ -525,6 +525,7 @@ export default function App() {
             <ThesisDataView
               onSendToStudio={handleSendToStudio}
               highlightYear={targetYear}
+              currentLang={currentLang}
             />
           </div>
         )}

@@ -1,6 +1,9 @@
 import React from 'react';
 import { RotateCcw, ArrowRight } from 'lucide-react';
-import { DissertationQuestion } from '../../data/dissertationText';
+import {
+  DissertationQuestion,
+  DISSERTATION_FULL_QUESTIONS,
+} from '../../data/dissertationText';
 import { SupportedLang } from '../../data/translations';
 import { Button } from '../common/Button';
 
@@ -77,6 +80,11 @@ export const DefenseSimulationSummary: React.FC<DefenseSimulationSummaryProps> =
           {isPt
             ? `Relatório das ${questions.length} questões sorteadas perante a comissão examinadora. Os dados abaixo reflectem o estado real de resposta, entrega e verificação em cada ponto da arguição.`
             : `Record of the ${questions.length} panel questions drawn for examination. The table below details drafted text, submission status, and criteria checks for each point.`}
+        </p>
+        <p className="text-[11px] text-[#4F5C48]/80 italic pt-1 border-t border-[#D9CDAF]/40">
+          {isPt
+            ? 'Construção pedagógica da plataforma (não constitui classificação oficial da UEM/ESUDER).'
+            : 'Pedagogical design of the platform (does not constitute an official UEM/ESUDER grading).'}
         </p>
       </div>
 
@@ -160,7 +168,9 @@ export const DefenseSimulationSummary: React.FC<DefenseSimulationSummaryProps> =
           icon={<ArrowRight className="w-3.5 h-3.5" />}
           className="w-full sm:w-auto"
         >
-          {isPt ? 'Explorar Todas as 60 Perguntas' : 'Explore All 60 Questions'}
+          {isPt
+            ? `Explorar Todas as ${DISSERTATION_FULL_QUESTIONS.length} Perguntas`
+            : `Explore All ${DISSERTATION_FULL_QUESTIONS.length} Questions`}
         </Button>
       </div>
     </section>
