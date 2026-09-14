@@ -1,5 +1,5 @@
 import React from 'react';
-import { FieldInterview } from '../../data/fieldInterviews';
+import { FieldInterview, FIELD_INTERVIEWS } from '../../data/fieldInterviews';
 import { CROSS_EVIDENCE_ITEMS } from '../../data/fieldCrossEvidence';
 import {
   X,
@@ -82,7 +82,7 @@ export const FieldInterviewDetailModal: React.FC<FieldInterviewDetailModalProps>
               <span className="text-[#D9CDAF]">·</span>
               <span className="font-semibold text-[#1A2417]">{isPt ? `Folha Física ${interview.pageNumber}` : `Physical Sheet ${interview.pageNumber}`}</span>
               <span className="text-[#D9CDAF]">·</span>
-              <span>{isPt ? `Registo ${interview.recordIndex} de 77` : `Record ${interview.recordIndex} of 77`}</span>
+              <span>{isPt ? `Registo ${interview.recordIndex} de ${FIELD_INTERVIEWS.length}` : `Record ${interview.recordIndex} of ${FIELD_INTERVIEWS.length}`}</span>
             </div>
             <h2 className="text-lg sm:text-xl font-bold font-display text-[#1A2417] truncate">
               {interview.name}

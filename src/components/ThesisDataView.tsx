@@ -252,11 +252,11 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#354D2C]" />
               <h3 className="font-serif text-lg font-bold text-[#1A2417]">
-                Série Histórica da Produção de Mandioca (1994–2024)
+                Série Histórica da Produção de Mandioca ({THESIS_CORE_FACTS.initialYear}–{THESIS_CORE_FACTS.terminalYear})
               </h3>
             </div>
             <p className="text-xs text-[#4F5C48] mt-0.5">
-              31 anos de trajetória agrária distrital em toneladas de raiz fresca (t).
+              {THESIS_CORE_FACTS.totalYears} anos de trajetória agrária distrital em toneladas de raiz fresca (t).
             </p>
           </div>
 
@@ -366,7 +366,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         </div>
 
         <p className="text-xs text-[#1A2417] leading-relaxed">
-          O modelo econométrico da tese identificou 14 safras afetadas por anomalias biofísicas entre 1994 e 2024. As perdas foram calculadas como o diferencial anual entre a Trajetória de Tendência Contrafactual (produção que teria ocorrido em condições agroclimáticas normais) e o volume efetivamente colhido.
+          O modelo econométrico da tese identificou {THESIS_CORE_FACTS.adverseYearsCountModeled} safras afetadas por anomalias biofísicas no período modelado ({THESIS_CORE_FACTS.accumulatedLossesPeriod}). As perdas foram calculadas como o diferencial anual entre a Trajetória de Tendência Contrafactual (produção que teria ocorrido em condições agroclimáticas normais) e o volume efetivamente colhido.
         </p>
 
         {/* 3 Critical Shock Deep-Dives */}
@@ -421,7 +421,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
               Safra desaba para 35.371 t
             </h4>
             <p className="text-[#4F5C48] text-[11px] leading-relaxed">
-              Pior colapso dos 31 anos. Não foi causado por seca, mas por precipitação torrencial contínua de tempestades e Ciclone Freddy (+78,1% de anomalia), provocando asfixia radicular (anoxia anaeróbia) e podridão interna nos tubérculos submersos em baixas de Quissico.
+              Pior colapso dos {THESIS_CORE_FACTS.totalYears} anos. Não foi causado por seca, mas por precipitação torrencial contínua de tempestades e Ciclone Freddy (+78,1% de anomalia), provocando asfixia radicular (anoxia anaeróbia) e podridão interna nos tubérculos submersos em baixas de Quissico.
             </p>
           </div>
         </div>
@@ -429,7 +429,7 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         {/* Shock years mini-strip */}
         <div className="space-y-1.5 pt-1">
           <span className="text-[11px] font-mono uppercase tracking-wider text-[#4F5C48] block">
-            Lista Completa dos 14 Anos Adversos Identificados:
+            Lista Completa dos {THESIS_CORE_FACTS.adverseYearsCountModeled} Anos Adversos Identificados:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {shockYearsList.map((pt) => (
@@ -469,11 +469,14 @@ export const ThesisDataView: React.FC<ThesisDataViewProps> = ({
         </div>
 
         {/* Crucial Scientific Warning Banner */}
-        <div className="p-3 bg-[#FCFAF6] border-l-4 border-[#354D2C] border-y border-r border-[#D9CDAF] rounded-[2px] space-y-1">
+        <div className="p-3.5 bg-[#FCFAF6] border-l-4 border-[#354D2C] border-y border-r border-[#D9CDAF] rounded-[2px] space-y-1.5">
           <span className="font-mono text-[10px] uppercase font-bold text-[#354D2C] tracking-wider block">
             Princípio Metodológico de Inferência Causal
           </span>
           <p className="text-xs text-[#1A2417] leading-relaxed font-semibold">
+            Associação temporal não implica causalidade: Relação estatística entre precipitação e quebras não estabelece nexo causal direto sem controlo de fatores edáficos e pragas.
+          </p>
+          <p className="text-xs text-[#4F5C48] leading-relaxed">
             {CHIRPS_CORRELATION_ANALYSIS.scientificCaveat}
           </p>
         </div>

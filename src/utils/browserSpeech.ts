@@ -22,7 +22,7 @@ export class BrowserSpeechController {
 
   public speak(text: string, langCode: string = 'pt-PT', rate: number = 1.0) {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      alert('Seu navegador não suporta a síntese de voz nativa.');
+      console.warn('Síntese de voz nativa não suportada neste navegador.');
       return;
     }
 

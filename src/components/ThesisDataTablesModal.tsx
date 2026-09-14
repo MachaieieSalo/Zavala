@@ -108,7 +108,7 @@ export const ThesisDataTablesModal: React.FC<ThesisDataTablesModalProps> = ({
                 <span>
                   <strong>Perda Acumulada no Período Modelado (1994–2016):</strong> {TOTAL_ESTIMATED_LOSSES_1994_2016.toLocaleString('pt-MZ')} toneladas em {THESIS_CORE_FACTS.adverseYearsCountModeled} anos de choques climáticos documentados.
                 </span>
-                <span className="font-mono text-[#5B7B4F] font-bold">14 anos adversos (60,9% dos 23 anos modelados)</span>
+                <span className="font-mono text-[#5B7B4F] font-bold">{THESIS_CORE_FACTS.adverseYearsCountModeled} anos adversos (60,9% em {THESIS_CORE_FACTS.accumulatedLossesPeriod})</span>
               </div>
 
               <div className="overflow-x-auto border border-[#DDD0B4] rounded-lg">

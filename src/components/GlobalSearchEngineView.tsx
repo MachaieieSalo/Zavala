@@ -27,16 +27,17 @@ import {
 } from '../utils/searchEngine';
 import { AppViewTab } from './Header';
 import { TRANSLATIONS, SupportedLang } from '../data/translations';
+import { THESIS_CORE_FACTS } from '../data/thesisScientificData';
 
 interface GlobalSearchEngineViewProps {
   onNavigateToTab: (tab: AppViewTab, param?: string | number) => void;
-  onSendToStudio: (text: string, title?: string) => void;
+  onSendToStudio: (text: string, title?: string, questionId?: string) => void;
   currentLang?: SupportedLang;
 }
 
 const QUICK_SEARCH_CHIPS = [
   'Ciclone Favio 2007',
-  '547.224 t perdidas',
+  `${THESIS_CORE_FACTS.accumulatedLossesTonnes.toLocaleString('pt-MZ')} t perdidas`,
   'Seca 2016',
   'Tubérculo na cova',
   'Yolanda Tamele',
@@ -84,7 +85,11 @@ export const GlobalSearchEngineView: React.FC<GlobalSearchEngineViewProps> = ({
   };
 
   const handleSendToStudioClick = (item: SearchResultItem) => {
-    onSendToStudio(item.fullSpeechText, item.title);
+    const qId =
+      item.category === 'defesa_banca' && typeof item.targetParam === 'string'
+        ? item.targetParam
+        : undefined;
+    onSendToStudio(item.fullSpeechText, item.title, qId);
   };
 
   const handleCrossingClick = (crossing: SuggestedCrossing) => {

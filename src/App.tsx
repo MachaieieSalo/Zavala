@@ -35,12 +35,37 @@ import {
 } from 'lucide-react';
 
 const STORAGE_KEY = 'zavalavoz_tts_history_v2';
+const TAB_STORAGE_KEY = 'zavalavoz_active_tab_v2';
+const LANG_STORAGE_KEY = 'zavalavoz_lang_v2';
+const VARIATION_STORAGE_KEY = 'zavalavoz_variation_v2';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<AppViewTab>('estudio');
-  const [currentLang, setCurrentLang] = useState<LanguageCode>('pt');
-  const [selectedVariation, setSelectedVariation] =
-    useState<VariationCode>('pt-MZ');
+  const [currentTab, setCurrentTab] = useState<AppViewTab>(() => {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE_KEY);
+      if (saved && ['estudio', 'defesa', 'campo', 'dados', 'pesquisa'].includes(saved)) {
+        return saved as AppViewTab;
+      }
+    } catch {}
+    return 'estudio';
+  });
+
+  const [currentLang, setCurrentLang] = useState<LanguageCode>(() => {
+    try {
+      const saved = localStorage.getItem(LANG_STORAGE_KEY);
+      if (saved === 'pt' || saved === 'en') return saved;
+    } catch {}
+    return 'pt';
+  });
+
+  const [selectedVariation, setSelectedVariation] = useState<VariationCode>(() => {
+    try {
+      const saved = localStorage.getItem(VARIATION_STORAGE_KEY);
+      if (saved) return saved as VariationCode;
+    } catch {}
+    return 'pt-MZ';
+  });
+
   const [selectedVoice, setSelectedVoice] = useState<VoiceName>('Kore');
   const [selectedTone, setSelectedTone] = useState<ToneStyle>('formal');
   const [speechRate, setSpeechRate] = useState<number>(1.0);
@@ -55,6 +80,25 @@ export default function App() {
   const [currentLoadedTitle, setCurrentLoadedTitle] = useState<string>(
     'Pergunta 1: Problema Central e Escolha de Zavala'
   );
+
+  // Persist navigation and language preferences safely
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, currentTab);
+    } catch {}
+  }, [currentTab]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, currentLang);
+    } catch {}
+  }, [currentLang]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(VARIATION_STORAGE_KEY, selectedVariation);
+    } catch {}
+  }, [selectedVariation]);
 
   // Data Modal State
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
@@ -139,12 +183,21 @@ export default function App() {
     showToast('Frase de exemplo carregada!');
   };
 
-  const handleSelectQuestionText = (questionText: string, title: string) => {
+  const handleSelectQuestionText = (questionText: string, title: string, questionId?: string) => {
     setText(questionText);
     setCurrentLoadedTitle(title);
-    const matched = DISSERTATION_FULL_QUESTIONS.find((q) => q.title === title);
-    setSelectedQuestionId(matched ? matched.id : null);
-    showToast(`Carregado: ${title}`);
+    const matched = questionId
+      ? DISSERTATION_FULL_QUESTIONS.find((q) => q.id === questionId)
+      : DISSERTATION_FULL_QUESTIONS.find(
+          (q) =>
+            q.id === title ||
+            q.title === title ||
+            `Pergunta ${q.number}: ${q.title}` === title ||
+            q.titleEn === title ||
+            `Question ${q.number}: ${q.titleEn}` === title
+        );
+    setSelectedQuestionId(matched ? matched.id : (questionId || null));
+    showToast(currentLang === 'pt' ? `Carregado: ${title}` : `Loaded: ${title}`);
 
     // If on mobile or in another tab, switch to 'estudio' so user can convert
     if (currentTab !== 'estudio') {
@@ -302,7 +355,9 @@ export default function App() {
       if (typeof param === 'string') {
         const found = DISSERTATION_FULL_QUESTIONS.find((q) => q.id === param);
         if (found) {
-          handleSelectQuestionText(found.text, `Pergunta ${found.number}: ${found.title}`);
+          setSelectedQuestionId(found.id);
+          setCurrentLoadedTitle(`Pergunta ${found.number}: ${found.title}`);
+          setCurrentTab('defesa');
           return;
         }
       }
@@ -314,10 +369,10 @@ export default function App() {
     }
   };
 
-  const handleSendToStudio = (newText: string, title?: string) => {
+  const handleSendToStudio = (newText: string, title?: string, questionId?: string) => {
     setText(newText);
     setCurrentLoadedTitle(title || (currentLang === 'pt' ? 'Registo da Dissertação' : 'Dissertation Record'));
-    setSelectedQuestionId(null);
+    setSelectedQuestionId(questionId || null);
     setCurrentTab('estudio');
     showToast(currentLang === 'pt' ? 'Texto carregado no Estúdio de Voz!' : 'Text loaded into Voice Studio!');
     if (textInputRef.current) {
@@ -479,7 +534,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: DEFESA Q&A (60 Perguntas & 7 Cenários) */}
+        {/* TAB: DEFESA Q&A (Banco de Perguntas & Cenários Canónicos) */}
         {currentTab === 'defesa' && (
           <div className="space-y-4">
             <PageHeader
@@ -496,6 +551,7 @@ export default function App() {
               selectedQuestionId={selectedQuestionId}
               currentLoadedTitle={currentLoadedTitle}
               currentLang={currentLang}
+              onNavigateToTab={(tab, param) => handleNavigateFromSearch(tab, param)}
             />
           </div>
         )}

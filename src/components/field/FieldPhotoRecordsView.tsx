@@ -231,7 +231,7 @@ export const FieldPhotoRecordsView: React.FC<FieldPhotoRecordsViewProps> = ({
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-mono bg-[#F4EFE6] text-[#354D2C] border border-[#D9CDAF]">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#354D2C]" />
-              <span>{uploadedCount} / 10 {isPt ? 'Fotos Reais Carregadas' : 'Real Photos Loaded'}</span>
+              <span>{uploadedCount} / {photos.length} {isPt ? 'Fotos Reais Carregadas' : 'Real Photos Loaded'}</span>
             </span>
 
             <button

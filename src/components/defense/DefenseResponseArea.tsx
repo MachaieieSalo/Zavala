@@ -21,7 +21,7 @@ interface DefenseResponseAreaProps {
   onEvaluate: () => void;
   isEvaluating: boolean;
   onPlaySpeech: (text: string) => void;
-  onSendToStudio: (text: string, title: string) => void;
+  onSendToStudio: (text: string, title: string, questionId?: string) => void;
   questionLang: SupportedLang;
   currentLang: SupportedLang;
 }
@@ -252,7 +252,7 @@ export const DefenseResponseArea: React.FC<DefenseResponseAreaProps> = ({
               const textToLoad = responseText.trim()
                 ? `Pergunta ${question.number} • ${question.examinerRole}\n\nJúri:\n${question.juryQuestion}\n\nResposta do Candidato:\n${responseText}`
                 : question.text;
-              onSendToStudio(textToLoad, title);
+              onSendToStudio(textToLoad, title, question.id);
             }}
             icon={<ArrowRight className="w-3.5 h-3.5" />}
             title={isPt ? 'Transferir esta sustentação para a bancada do Estúdio' : 'Transfer this response to Studio for vocal rehearsal'}

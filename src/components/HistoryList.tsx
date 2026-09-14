@@ -104,15 +104,22 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         </div>
       </div>
 
-      {/* Lista contínua com divisores de 1px */}
-      <div className="divide-y divide-[#D9CDAF]/80 border-y border-[#D9CDAF]/80">
-        {displayedItems.map((item) => {
-          const varInfo = getVariation(item.variation as VariationCode);
-          const voiceInfo = getVoice(item.voice);
+      {/* Lista contínua com divisores de 1px ou mensagem de estado vazio */}
+      {history.length === 0 ? (
+        <div className="py-6 px-4 text-center text-xs text-[#4F5C48] bg-[#FCFAF6] border border-dashed border-[#D9CDAF] rounded-[3px]">
+          {isPt
+            ? 'Nenhum ensaio vocal gravado ainda. Sintetize um áudio para guardar o registo do seu ensaio.'
+            : 'No voice rehearsals recorded yet. Synthesize an audio to save your rehearsal record.'}
+        </div>
+      ) : (
+        <div className="divide-y divide-[#D9CDAF]/80 border-y border-[#D9CDAF]/80">
+          {displayedItems.map((item) => {
+            const varInfo = getVariation(item.variation as VariationCode);
+            const voiceInfo = getVoice(item.voice);
 
-          return (
-            <div
-              key={item.id}
+            return (
+              <div
+                key={item.id}
               className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-[#FCFAF6] transition-colors text-xs"
             >
               {/* Informações da gravação */}
@@ -177,6 +184,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
           );
         })}
       </div>
+      )}
     </section>
   );
 };

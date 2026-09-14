@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ScientificTimeSeriesPoint } from '../../data/thesisScientificData';
+import { ScientificTimeSeriesPoint, THESIS_CORE_FACTS } from '../../data/thesisScientificData';
 import {
   ArrowUpDown,
   Search,
@@ -106,7 +106,7 @@ export const ScientificTable: React.FC<ScientificTableProps> = ({
   };
 
   const handleCopySummary = () => {
-    const text = `Série Histórica Zavala (1994-2024): 31 anos analisados. 1994: 52.164 t; 2021 (pico): 273.773 t; 2023 (Freddy): 35.371 t; 2024: 48.573 t. Tendência OLS: +4.229 t/ano (p=0,020). Mann-Kendall Z=3,100 (p=0,0019).`;
+    const text = `Série Histórica Zavala (${THESIS_CORE_FACTS.initialYear}-${THESIS_CORE_FACTS.terminalYear}): ${THESIS_CORE_FACTS.totalYears} anos analisados. ${THESIS_CORE_FACTS.initialYear}: 52.164 t; ${THESIS_CORE_FACTS.peakYear} (pico): 273.773 t; 2023 (Freddy): 35.371 t; ${THESIS_CORE_FACTS.terminalYear}: 48.573 t. Tendência OLS: +4.229 t/ano (p=0,020). Mann-Kendall Z=${THESIS_CORE_FACTS.mannKendallZ.toFixed(3).replace('.', ',')} (p=0,0019).`;
     navigator.clipboard.writeText(text);
     setCopyFeedback('Resumo estatístico copiado!');
     setTimeout(() => setCopyFeedback(null), 3000);

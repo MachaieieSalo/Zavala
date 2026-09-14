@@ -20,18 +20,30 @@ import {
   DefenseSimulationSummary,
   QuestionSimulationRecord,
 } from './defense/DefenseSimulationSummary';
+import { DefenseAdversarialView } from './defense/DefenseAdversarialView';
+import {
+  selectAdversarialSessionQuestions,
+} from '../data/adversarialVulnerabilities';
 import {
   generateAcademicEvaluation,
   EvaluationFeedback,
 } from './defense/defenseKnowledge';
+import { ShieldAlert } from 'lucide-react';
 
 interface SectionSelectorProps {
-  onSelectQuestionText: (text: string, title: string) => void;
+  onSelectQuestionText: (text: string, title: string, questionId?: string) => void;
   onPlayQuickSpeech: (text: string) => void;
   selectedQuestionId: string | null;
   currentLoadedTitle: string;
   currentLang?: SupportedLang;
+  onNavigateToTab?: (tab: 'dados' | 'campo' | 'estudio' | 'defesa', param?: string) => void;
 }
+
+const DEFENSE_DRAFTS_KEY = 'zavalavoz_defense_drafts_v2';
+const DEFENSE_DELIVERED_KEY = 'zavalavoz_defense_delivered_v2';
+const DEFENSE_EVALUATIONS_KEY = 'zavalavoz_defense_evaluations_v2';
+const DEFENSE_ACTIVE_QID_KEY = 'zavalavoz_defense_active_qid_v2';
+const ADVERSARIAL_SESSION_KEY = 'zavalavoz_adversarial_sessions_v1';
 
 export const SectionSelector: React.FC<SectionSelectorProps> = ({
   onSelectQuestionText,
@@ -39,11 +51,12 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
   selectedQuestionId,
   currentLoadedTitle,
   currentLang = 'pt',
+  onNavigateToTab,
 }) => {
   const isPt = currentLang === 'pt';
 
-  // Mode: 'estudo' (exploração de 60 perguntas) vs 'simulador' (banca de foco com 5 perguntas)
-  const [activeMode, setActiveMode] = useState<'estudo' | 'simulador'>('estudo');
+  // Mode: 'estudo' (exploração de perguntas) vs 'simulador' (banca aleatória) vs 'adversarial' (banca com objecções reais)
+  const [activeMode, setActiveMode] = useState<'estudo' | 'simulador' | 'adversarial'>('estudo');
 
   // Question language (independent toggle for reading in PT or EN)
   const [questionLang, setQuestionLang] = useState<SupportedLang>(currentLang);
@@ -58,9 +71,16 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('todas');
 
   // Active question in study mode
-  const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    selectedQuestionId || 'q_1'
-  );
+  const [activeQuestionId, setActiveQuestionId] = useState<string>(() => {
+    if (selectedQuestionId) return selectedQuestionId;
+    try {
+      const saved = localStorage.getItem(DEFENSE_ACTIVE_QID_KEY);
+      if (saved && DISSERTATION_FULL_QUESTIONS.some((q) => q.id === saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'q_1';
+  });
 
   // Sync if external selectedQuestionId changes
   useEffect(() => {
@@ -69,15 +89,69 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
     }
   }, [selectedQuestionId]);
 
-  // Candidate drafted responses cache (stored per question ID)
-  const [draftedResponses, setDraftedResponses] = useState<Record<string, string>>({});
+  // Candidate drafted responses cache (stored per question ID with safe persistence)
+  const [draftedResponses, setDraftedResponses] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(DEFENSE_DRAFTS_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // Delivered set to track submissions
-  const [deliveredQuestions, setDeliveredQuestions] = useState<Record<string, boolean>>({});
+  const [deliveredQuestions, setDeliveredQuestions] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(DEFENSE_DELIVERED_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // Active evaluation feedback per question
-  const [evaluations, setEvaluations] = useState<Record<string, EvaluationFeedback>>({});
+  const [evaluations, setEvaluations] = useState<Record<string, EvaluationFeedback>>(() => {
+    try {
+      const saved = localStorage.getItem(DEFENSE_EVALUATIONS_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+
+  // Persist defense states safely
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEFENSE_DRAFTS_KEY, JSON.stringify(draftedResponses));
+    } catch (e) {
+      console.warn('Could not persist defense drafts to localStorage:', e);
+    }
+  }, [draftedResponses]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEFENSE_DELIVERED_KEY, JSON.stringify(deliveredQuestions));
+    } catch (e) {
+      console.warn('Could not persist delivered questions to localStorage:', e);
+    }
+  }, [deliveredQuestions]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEFENSE_EVALUATIONS_KEY, JSON.stringify(evaluations));
+    } catch (e) {
+      console.warn('Could not persist evaluations to localStorage:', e);
+    }
+  }, [evaluations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEFENSE_ACTIVE_QID_KEY, activeQuestionId);
+    } catch (e) {
+      console.warn('Could not persist active question ID to localStorage:', e);
+    }
+  }, [activeQuestionId]);
 
   // Mobile list sheet toggle
   const [isMobileListOpen, setIsMobileListOpen] = useState<boolean>(false);
@@ -94,6 +168,38 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
     setMockIndex(0);
     setIsMockFinished(false);
     setActiveMode('simulador');
+  };
+
+  // Adversarial State (5 vulnerability-confronting questions)
+  const [adversarialQuestions, setAdversarialQuestions] = useState<DissertationQuestion[]>(() => {
+    try {
+      const saved = localStorage.getItem(ADVERSARIAL_SESSION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const mapped = parsed
+            .map((id) => DISSERTATION_FULL_QUESTIONS.find((q) => q.id === id))
+            .filter(Boolean) as DissertationQuestion[];
+          if (mapped.length === 5) return mapped;
+        }
+      }
+    } catch {}
+    // Conjunto canónico de referência para validação da arguição metodológica: q_2, q_9, q_10, q_13, q_40
+    const benchmarkQuestions = ['q_2', 'q_9', 'q_10', 'q_13', 'q_40']
+      .map((id) => DISSERTATION_FULL_QUESTIONS.find((q) => q.id === id))
+      .filter(Boolean) as DissertationQuestion[];
+    if (benchmarkQuestions.length === 5) return benchmarkQuestions;
+    return selectAdversarialSessionQuestions(5);
+  });
+
+  const startAdversarialSession = () => {
+    const selected = selectAdversarialSessionQuestions(5);
+    setAdversarialQuestions(selected);
+    try {
+      localStorage.setItem(ADVERSARIAL_SESSION_KEY, JSON.stringify(selected.map((q) => q.id)));
+    } catch (e) {
+      console.warn('Could not persist adversarial session:', e);
+    }
   };
 
   // Filtered questions list
@@ -272,6 +378,25 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
             >
               {isPt ? 'Simulador de Banca (5 Perguntas)' : 'Mock Panel (5 Questions)'}
             </button>
+            <button
+              id="tab-adversarial"
+              role="tab"
+              aria-selected={activeMode === 'adversarial'}
+              aria-controls="panel-defesa"
+              type="button"
+              onClick={() => {
+                setActiveMode('adversarial');
+                setIsMockFinished(false);
+              }}
+              className={`px-3 py-1.5 rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                activeMode === 'adversarial'
+                  ? 'bg-[#2A3A24] text-[#FCFAF6] font-semibold'
+                  : 'text-[#4F5C48] hover:text-[#1A2417]'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-[#D9CDAF]" />
+              <span>{isPt ? 'Banca Adversarial' : 'Adversarial Board'}</span>
+            </button>
           </div>
 
           {activeMode === 'simulador' && !isMockFinished && (
@@ -283,6 +408,18 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               title={isPt ? 'Sortear novo grupo de 5 perguntas' : 'Draw new 5-question panel'}
             >
               {isPt ? 'Sortear Nova' : 'Redraw'}
+            </Button>
+          )}
+
+          {activeMode === 'adversarial' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={startAdversarialSession}
+              icon={<Shuffle className="w-3.5 h-3.5" />}
+              title={isPt ? 'Sortear novo grupo de 5 perguntas adversariais' : 'Draw new 5 adversarial questions'}
+            >
+              {isPt ? 'Novo Sorteio' : 'New Draw'}
             </Button>
           )}
         </div>
@@ -301,8 +438,22 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
         </div>
       </div>
 
-      {/* SIMULATOR COMPLETED SUMMARY VIEW (Factual Session Record) */}
-      {activeMode === 'simulador' && isMockFinished ? (
+      {/* ADVERSARIAL BOARD WORKSTATION */}
+      {activeMode === 'adversarial' ? (
+        <DefenseAdversarialView
+          questions={adversarialQuestions}
+          selectedQuestionId={selectedQuestionId}
+          onSendToStudio={(textToLoad, title, qId) => {
+            onSelectQuestionText(textToLoad, title, qId);
+          }}
+          onPlayQuickSpeech={onPlayQuickSpeech}
+          onRestartSession={startAdversarialSession}
+          onReturnToStudyMode={() => setActiveMode('estudo')}
+          onNavigateToTab={onNavigateToTab}
+          questionLang={questionLang}
+        />
+      ) : activeMode === 'simulador' && isMockFinished ? (
+        /* SIMULATOR COMPLETED SUMMARY VIEW (Factual Session Record) */
         <DefenseSimulationSummary
           questions={mockQuestions}
           records={simulationRecords}
@@ -365,6 +516,9 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
                   onScenarioChange={setSelectedScenarioId}
                   selectedDifficulty={selectedDifficulty}
                   onDifficultyChange={setSelectedDifficulty}
+                  draftedResponses={draftedResponses}
+                  deliveredQuestions={deliveredQuestions}
+                  evaluations={evaluations}
                   questionLang={questionLang}
                   currentLang={currentLang}
                 />
@@ -403,7 +557,9 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               onEvaluate={handleEvaluate}
               isEvaluating={isEvaluating}
               onPlaySpeech={onPlayQuickSpeech}
-              onSendToStudio={onSelectQuestionText}
+              onSendToStudio={(textToLoad, title, qId) => {
+                onSelectQuestionText(textToLoad, title, qId || currentQuestion.id);
+              }}
               questionLang={questionLang}
               currentLang={currentLang}
             />

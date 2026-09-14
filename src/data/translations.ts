@@ -1,3 +1,5 @@
+import { DISSERTATION_FULL_QUESTIONS, DEFENSE_SCENARIOS } from './dissertationText';
+
 export type SupportedLang = 'pt' | 'en';
 
 export interface Translations {
@@ -151,7 +153,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     },
     defense: {
       title: 'Banco de Perguntas & Simulação de Defesa',
-      subtitle: 'Explore 60 questões estruturadas em 7 cenários da tese de Yolanda Tamele (ESUDER / UEM)',
+      subtitle: `Explore as ${DISSERTATION_FULL_QUESTIONS.length} questões estruturadas em ${DEFENSE_SCENARIOS.length} cenários da tese de Yolanda Tamele (ESUDER / UEM)`,
       totalQuestions: 'perguntas disponíveis',
       allScenarios: 'Todos os Cenários',
       mockDefenseMode: 'Simulador de Defesa Real',
@@ -265,7 +267,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     },
     defense: {
       title: 'Defense Question Bank & Mock Exam Simulator',
-      subtitle: 'Explore 60 comprehensive questions structured across 7 thesis defense scenarios (Yolanda Tamele, ESUDER / UEM)',
+      subtitle: `Explore ${DISSERTATION_FULL_QUESTIONS.length} comprehensive questions structured across ${DEFENSE_SCENARIOS.length} thesis defense scenarios (Yolanda Tamele, ESUDER / UEM)`,
       totalQuestions: 'questions available',
       allScenarios: 'All Scenarios',
       mockDefenseMode: 'Live Mock Defense Simulator',

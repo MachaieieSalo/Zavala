@@ -17,6 +17,9 @@ interface DefenseQuestionListProps {
   onScenarioChange: (scenarioId: string) => void;
   selectedDifficulty: string;
   onDifficultyChange: (difficulty: string) => void;
+  draftedResponses?: Record<string, string>;
+  deliveredQuestions?: Record<string, boolean>;
+  evaluations?: Record<string, any>;
   questionLang: SupportedLang;
   currentLang: SupportedLang;
 }
@@ -31,10 +34,19 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
   onScenarioChange,
   selectedDifficulty,
   onDifficultyChange,
+  draftedResponses = {},
+  deliveredQuestions = {},
+  evaluations = {},
   questionLang,
   currentLang,
 }) => {
   const isPt = currentLang === 'pt';
+
+  const answeredCount = Object.values(draftedResponses).filter(
+    (t) => typeof t === 'string' && t.trim().length > 0
+  ).length;
+  const deliveredCount = Object.values(deliveredQuestions).filter(Boolean).length;
+  const evaluatedCount = Object.keys(evaluations).length;
 
   return (
     <aside
@@ -126,6 +138,31 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
             })}
           </div>
         </div>
+
+        {/* Real Progress Counters (Factual derived metrics) */}
+        <div className="pt-2.5 border-t border-[#D9CDAF]/60 grid grid-cols-3 gap-1 text-center text-[10px] font-mono">
+          <div className="bg-[#F4EFE6] p-1.5 rounded-[2px] border border-[#D9CDAF]/60">
+            <span className="block text-[#4F5C48] text-[9px] uppercase tracking-wider font-sans font-semibold">
+              {isPt ? 'Rascunhadas' : 'Drafted'}
+            </span>
+            <span className="font-bold text-[#1A2417] text-xs">{answeredCount}</span>
+            <span className="text-[#4F5C48] text-[9px]"> / {DISSERTATION_FULL_QUESTIONS.length}</span>
+          </div>
+          <div className="bg-[#F4EFE6] p-1.5 rounded-[2px] border border-[#D9CDAF]/60">
+            <span className="block text-[#4F5C48] text-[9px] uppercase tracking-wider font-sans font-semibold">
+              {isPt ? 'Entregues' : 'Delivered'}
+            </span>
+            <span className="font-bold text-[#354D2C] text-xs">{deliveredCount}</span>
+            <span className="text-[#4F5C48] text-[9px]"> / {DISSERTATION_FULL_QUESTIONS.length}</span>
+          </div>
+          <div className="bg-[#F4EFE6] p-1.5 rounded-[2px] border border-[#D9CDAF]/60">
+            <span className="block text-[#4F5C48] text-[9px] uppercase tracking-wider font-sans font-semibold">
+              {isPt ? 'Avaliadas' : 'Evaluated'}
+            </span>
+            <span className="font-bold text-[#A8531E] text-xs">{evaluatedCount}</span>
+            <span className="text-[#4F5C48] text-[9px]"> / {DISSERTATION_FULL_QUESTIONS.length}</span>
+          </div>
+        </div>
       </div>
 
       {/* Questions List (Progressive Disclosure) */}
@@ -136,6 +173,10 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
           const isCriticalInquiry = q.difficulty === 'Arguição Crítica';
           const title = questionLang === 'pt' ? q.title : q.titleEn;
           const examiner = questionLang === 'pt' ? q.examinerRole : q.examinerRoleEn;
+
+          const hasDraft = !!draftedResponses[q.id]?.trim();
+          const isDelivered = !!deliveredQuestions[q.id];
+          const isEvaluated = !!evaluations[q.id];
 
           return (
             <button
@@ -161,18 +202,43 @@ export const DefenseQuestionList: React.FC<DefenseQuestionListProps> = ({
                   <span className="text-[10px] text-[#4F5C48] truncate font-sans">
                     {examiner}
                   </span>
-                  {isCriticalInquiry && (
-                    <span
-                      title={
-                        isPt
-                          ? 'Arguição Crítica: Categoria pedagógica do simulador (não é classificação oficial UEM/ESUDER)'
-                          : 'Critical Inquiry: Simulator pedagogical category (not an official UEM/ESUDER classification)'
-                      }
-                      className="text-[10px] font-medium text-[#4F5C48] bg-[#EAE2D2]/60 px-1.5 py-0.2 rounded-[2px] shrink-0"
-                    >
-                      {isPt ? 'Crítica' : 'Critical'}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isEvaluated ? (
+                      <span
+                        className="text-[9px] font-mono px-1 py-0.2 rounded-[2px] bg-[#A8531E]/15 text-[#A8531E] border border-[#A8531E]/30 font-medium"
+                        title={isPt ? 'Resposta avaliada pedagogicamente' : 'Response evaluated'}
+                      >
+                        {isPt ? 'Avaliada' : 'Evaluated'}
+                      </span>
+                    ) : isDelivered ? (
+                      <span
+                        className="text-[9px] font-mono px-1 py-0.2 rounded-[2px] bg-[#354D2C]/15 text-[#354D2C] border border-[#354D2C]/30 font-medium"
+                        title={isPt ? 'Resposta entregue à banca' : 'Response delivered'}
+                      >
+                        {isPt ? 'Entregue' : 'Delivered'}
+                      </span>
+                    ) : hasDraft ? (
+                      <span
+                        className="text-[9px] font-mono px-1 py-0.2 rounded-[2px] bg-[#D9CDAF]/40 text-[#4F5C48]"
+                        title={isPt ? 'Rascunho em preparação' : 'Draft in progress'}
+                      >
+                        {isPt ? 'Rascunho' : 'Draft'}
+                      </span>
+                    ) : null}
+
+                    {isCriticalInquiry && (
+                      <span
+                        title={
+                          isPt
+                            ? 'Arguição Crítica: Categoria pedagógica do simulador (não é classificação oficial UEM/ESUDER)'
+                            : 'Critical Inquiry: Simulator pedagogical category (not an official UEM/ESUDER classification)'
+                        }
+                        className="text-[10px] font-medium text-[#4F5C48] bg-[#EAE2D2]/60 px-1.5 py-0.2 rounded-[2px] shrink-0"
+                      >
+                        {isPt ? 'Crítica' : 'Critical'}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <p

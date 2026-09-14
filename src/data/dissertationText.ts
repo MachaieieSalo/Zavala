@@ -1,4 +1,4 @@
-// Banco Expandido de Perguntas da Defesa da Dissertação (60 Perguntas em 7 Cenários)
+// Banco Canónico de Perguntas da Defesa da Dissertação (42 Perguntas em 7 Cenários)
 // Dissertação de Mestrado: "Dinâmica da Produção de Mandioca no Distrito de Zavala (1994-2024)"
 // Autora: Yolanda Tamele • ESUDER / UEM
 
@@ -407,7 +407,7 @@ export const DISSERTATION_FULL_QUESTIONS: DissertationQuestion[] = [
   },
 
   // ==========================================
-  // CENÁRIO 6: FOGO CRUZADO / PERGUNTAS-ARMADILHA (q_16 a q_25)
+  // CENÁRIO 6: ARGUIÇÃO CRÍTICA / OBJECÇÕES E VULNERABILIDADES (q_16 a q_25)
   // ==========================================
   {
     id: 'q_16',

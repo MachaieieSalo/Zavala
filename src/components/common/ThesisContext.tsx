@@ -142,8 +142,8 @@ export const ThesisContext: React.FC<ThesisContextProps> = ({
         {level === 'expanded' && (
           <p className="text-xs sm:text-sm text-[#4F5C48] leading-relaxed max-w-4xl">
             {isPt
-              ? 'Investigação pioneira na reconstituição em três camadas da série de produção de mandioca (1994-2024), teste de tendências estruturais com correcção para dependência serial e mapeamento por deteção remota Sentinel-2 nos 11 bairros de Quissico.'
-              : 'Pioneering research reconstructing 31 years of cassava production (1994–2024) via a three-layer model, serial-correlation corrected Mann-Kendall trend tests, and Sentinel-2 remote sensing across 11 villages in Quissico.'}
+              ? `Investigação pioneira na reconstituição em três camadas da série de produção de mandioca (${THESIS_CORE_FACTS.initialYear}–${THESIS_CORE_FACTS.terminalYear}), teste de tendências estruturais com correcção para dependência serial e mapeamento por deteção remota Sentinel-2 nos ${THESIS_CORE_FACTS.spatialBairrosCount} bairros de Quissico.`
+              : `Pioneering research reconstructing ${THESIS_CORE_FACTS.totalYears} years of cassava production (${THESIS_CORE_FACTS.initialYear}–${THESIS_CORE_FACTS.terminalYear}) via a three-layer model, serial-correlation corrected Mann-Kendall trend tests, and Sentinel-2 remote sensing across ${THESIS_CORE_FACTS.spatialBairrosCount} villages in Quissico.`}
           </p>
         )}
       </div>
