@@ -691,6 +691,8 @@ export const THESIS_CORE_FACTS = {
   timeSeriesPeriod: '1994–2024',
   modeledPeriod: '1994–2016 (23 anos)',
   observedPeriod: '2017–2024 (8 anos)',
+  modeledPeriodYears: 23,
+  observedPeriodYears: 8,
   initialYear: 1994,
   initialProductionTonnes: 52164,
   terminalYear: 2024,

@@ -12,6 +12,8 @@ import { AudioPlayer } from './components/AudioPlayer';
 import { HistoryList } from './components/HistoryList';
 import { SectionSelector } from './components/SectionSelector';
 import { GlobalSearchEngineView } from './components/GlobalSearchEngineView';
+import { ResearchStationView } from './components/research/ResearchStationView';
+import { CrossAuditView } from './components/research/CrossAuditView';
 import {
   LanguageCode,
   VariationCode,
@@ -107,6 +109,8 @@ export default function App() {
   const [targetPhotoId, setTargetPhotoId] = useState<string | undefined>(undefined);
   const [targetFieldSubTab, setTargetFieldSubTab] = useState<'registos' | 'entrevistas' | 'evidencia'>('registos');
   const [targetYear, setTargetYear] = useState<number | undefined>(undefined);
+  const [targetAdversarialCode, setTargetAdversarialCode] = useState<string | undefined>(undefined);
+  const [researchSubMode, setResearchSubMode] = useState<'llm' | 'audit' | 'index'>('llm');
 
   // Audio synthesis state
   const [currentAudio, setCurrentAudio] = useState<TTSResponse | null>(null);
@@ -353,6 +357,11 @@ export default function App() {
       setCurrentTab('dados');
     } else if (tab === 'defesa') {
       if (typeof param === 'string') {
+        if (param.startsWith('V') || param.startsWith('v_') || param.startsWith('vuln_')) {
+          setTargetAdversarialCode(param);
+          setCurrentTab('defesa');
+          return;
+        }
         const found = DISSERTATION_FULL_QUESTIONS.find((q) => q.id === param);
         if (found) {
           setSelectedQuestionId(found.id);
@@ -362,6 +371,15 @@ export default function App() {
         }
       }
       setCurrentTab('defesa');
+    } else if (tab === 'pesquisa') {
+      if (param === 'audit' || param === 'auditoria') {
+        setResearchSubMode('audit');
+      } else if (param === 'index' || param === 'indice') {
+        setResearchSubMode('index');
+      } else {
+        setResearchSubMode('llm');
+      }
+      setCurrentTab('pesquisa');
     } else if (tab === 'estudio') {
       setCurrentTab('estudio');
     } else {
@@ -551,6 +569,7 @@ export default function App() {
               selectedQuestionId={selectedQuestionId}
               currentLoadedTitle={currentLoadedTitle}
               currentLang={currentLang}
+              initialAdversarialCode={targetAdversarialCode}
               onNavigateToTab={(tab, param) => handleNavigateFromSearch(tab, param)}
             />
           </div>
@@ -586,22 +605,96 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB: ÍNDICE DE CONSULTA CRUZADA DA DISSERTAÇÃO */}
+        {/* TAB: ESTAÇÃO DE PESQUISA CIENTÍFICA / ÍNDICE REMISSIVO */}
         {currentTab === 'pesquisa' && (
           <div className="space-y-4">
-            <PageHeader
-              context={currentLang === 'pt' ? 'ÍNDICE REMISSIVO DA DISSERTAÇÃO' : 'DISSERTATION CROSS-INDEX'}
-              title={currentLang === 'pt' ? 'Índice de Consulta Cruzada' : 'Cross-Reference Index'}
-              description={currentLang === 'pt'
-                ? 'Localização e cruzamento sistemático entre séries estatísticas, choques, registos etnográficos e arguição oral da dissertação.'
-                : 'Systematic localization and cross-referencing across statistical series, shocks, ethnographic records, and oral defense arguments.'}
-            />
+            {/* Sub-navegação da Aba Pesquisa: Estação LLM vs Auditoria Cruzada vs Índice Remissivo */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-2.5 shadow-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#5A6852]">
+                  {currentLang === 'pt' ? 'Modo de Consulta:' : 'Query Mode:'}
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setResearchSubMode('llm')}
+                    className={`px-3 py-1.5 rounded-[3px] text-xs font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                      researchSubMode === 'llm'
+                        ? 'bg-[#2A3A24] text-[#FCFAF6] font-semibold shadow-xs'
+                        : 'bg-[#F4EFE6] text-[#4F5C48] hover:bg-[#EAE3D2] border border-[#D9CDAF]'
+                    }`}
+                  >
+                    {currentLang === 'pt' ? 'Pergunte à sua Dissertação (IA)' : 'Ask Your Dissertation (AI)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResearchSubMode('audit')}
+                    className={`px-3 py-1.5 rounded-[3px] text-xs font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                      researchSubMode === 'audit'
+                        ? 'bg-[#2A3A24] text-[#FCFAF6] font-semibold shadow-xs'
+                        : 'bg-[#F4EFE6] text-[#4F5C48] hover:bg-[#EAE3D2] border border-[#D9CDAF]'
+                    }`}
+                  >
+                    {currentLang === 'pt'
+                      ? 'Auditoria Cruzada (Dados vs Método)'
+                      : 'Cross-Scientific Audit'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResearchSubMode('index')}
+                    className={`px-3 py-1.5 rounded-[3px] text-xs font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                      researchSubMode === 'index'
+                        ? 'bg-[#2A3A24] text-[#FCFAF6] font-semibold shadow-xs'
+                        : 'bg-[#F4EFE6] text-[#4F5C48] hover:bg-[#EAE3D2] border border-[#D9CDAF]'
+                    }`}
+                  >
+                    {currentLang === 'pt' ? 'Índice Remissivo e Busca Cruzada' : 'Cross-Reference Index'}
+                  </button>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-[#8C7D6B] hidden sm:inline">
+                {researchSubMode === 'llm'
+                  ? 'Motor Científico com Guardrails Epistemológicos'
+                  : researchSubMode === 'audit'
+                  ? 'Confronto entre Dados, Métodos, Resultados e Interpretação'
+                  : 'Cruzamento Sistemático de Séries, Fotos e Inquéritos'}
+              </span>
+            </div>
 
-            <GlobalSearchEngineView
-              onNavigateToTab={handleNavigateFromSearch}
-              onSendToStudio={handleSendToStudio}
-              currentLang={currentLang}
-            />
+            {researchSubMode === 'llm' && (
+              <ResearchStationView
+                onNavigateToTab={handleNavigateFromSearch}
+                onSendToStudio={handleSendToStudio}
+                currentLang={currentLang}
+              />
+            )}
+
+            {researchSubMode === 'audit' && (
+              <CrossAuditView
+                onNavigateToAdversarialVulnerability={(code) =>
+                  handleNavigateFromSearch('defesa', code)
+                }
+                currentLang={currentLang}
+              />
+            )}
+
+            {researchSubMode === 'index' && (
+              <div className="space-y-4">
+                <PageHeader
+                  context={currentLang === 'pt' ? 'ÍNDICE REMISSIVO DA DISSERTAÇÃO' : 'DISSERTATION CROSS-INDEX'}
+                  title={currentLang === 'pt' ? 'Índice de Consulta Cruzada' : 'Cross-Reference Index'}
+                  description={currentLang === 'pt'
+                    ? 'Localização e cruzamento sistemático entre séries estatísticas, choques, registos etnográficos e arguição oral da dissertação.'
+                    : 'Systematic localization and cross-referencing across statistical series, shocks, ethnographic records, and oral defense arguments.'}
+                />
+
+                <GlobalSearchEngineView
+                  onNavigateToTab={handleNavigateFromSearch}
+                  onSendToStudio={handleSendToStudio}
+                  currentLang={currentLang}
+                />
+              </div>
+            )}
           </div>
         )}
       </main>

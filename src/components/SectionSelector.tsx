@@ -36,6 +36,7 @@ interface SectionSelectorProps {
   selectedQuestionId: string | null;
   currentLoadedTitle: string;
   currentLang?: SupportedLang;
+  initialAdversarialCode?: string;
   onNavigateToTab?: (tab: 'dados' | 'campo' | 'estudio' | 'defesa', param?: string) => void;
 }
 
@@ -51,12 +52,19 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
   selectedQuestionId,
   currentLoadedTitle,
   currentLang = 'pt',
+  initialAdversarialCode,
   onNavigateToTab,
 }) => {
   const isPt = currentLang === 'pt';
 
   // Mode: 'estudo' (exploração de perguntas) vs 'simulador' (banca aleatória) vs 'adversarial' (banca com objecções reais)
   const [activeMode, setActiveMode] = useState<'estudo' | 'simulador' | 'adversarial'>('estudo');
+
+  useEffect(() => {
+    if (initialAdversarialCode) {
+      setActiveMode('adversarial');
+    }
+  }, [initialAdversarialCode]);
 
   // Question language (independent toggle for reading in PT or EN)
   const [questionLang, setQuestionLang] = useState<SupportedLang>(currentLang);

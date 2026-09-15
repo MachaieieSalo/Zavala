@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import lamejs from '@breezystack/lamejs';
+import { handleResearchQuery } from './server/researchEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +21,54 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY),
     time: new Date().toISOString(),
   });
+});
+
+// Estação de Pesquisa Científica com LLM
+app.get('/api/research/status', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY),
+    model: process.env.OPENAI_API_KEY ? 'gpt-4o-mini' : 'zavalavoz-scientific-engine-v1',
+    corpus: 'Dissertação Yolanda Tamele (ESUDER / UEM 1994-2024)',
+  });
+});
+
+app.post('/api/research/query', async (req: Request, res: Response) => {
+  try {
+    const { query, scope, history } = req.body;
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      return res.status(400).json({
+        error: 'A consulta deve conter texto válido.',
+      });
+    }
+
+    const response = await handleResearchQuery({
+      query: query.trim(),
+      scope,
+      history,
+    });
+
+    return res.json(response);
+  } catch (error: any) {
+    console.error('Error in /api/research/query:', error);
+    const isTimeout = error?.code === 'ETIMEDOUT' || error?.message?.includes('timeout');
+    const isRateLimit = error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('quota');
+
+    let userMessage = 'Ocorreu uma falha ao consultar os materiais da dissertação.';
+    if (isTimeout) {
+      userMessage = 'O tempo limite de resposta da consulta foi excedido. Por favor, tente formular uma questão mais específica.';
+    } else if (isRateLimit) {
+      userMessage = 'O limite de consultas da API externa foi momentaneamente atingido. O motor determinístico foi accionado.';
+    }
+
+    return res.status(500).json({
+      error: userMessage,
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+    });
+  }
 });
 
 // Helper to chunk long texts safely on natural boundaries
