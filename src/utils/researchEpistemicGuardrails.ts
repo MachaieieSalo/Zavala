@@ -178,13 +178,18 @@ export function applyEpistemicGuardrailsToAnswer(
   if (
     lowerAnswer.includes('não está explicitamente documentada') ||
     lowerAnswer.includes('conhecimento externo') ||
+    lowerAnswer.includes('contextualização externa') ||
+    lowerAnswer.includes('esta informação não pertence ao corpus') ||
     lowerAnswer.includes('nível 5')
   ) {
     statusCategory = 'CONTEXTUALIZAÇÃO EXTERNA';
   } else if (
     lowerAnswer.includes('suporte insuficiente') ||
+    lowerAnswer.includes('não encontrei evidência suficiente') ||
     lowerAnswer.includes('dados não permitem') ||
-    lowerAnswer.includes('não foi possível localizar')
+    lowerAnswer.includes('não foi possível localizar') ||
+    lowerAnswer.includes('lacuna') ||
+    lowerAnswer.includes('não constam dos inquéritos')
   ) {
     statusCategory = 'SUPORTE INSUFICIENTE';
   } else if (

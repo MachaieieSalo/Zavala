@@ -30,6 +30,10 @@ import {
   CheckCircle2,
   FileText,
   List,
+  GraduationCap,
+  HelpCircle,
+  Mic,
+  MessageSquare,
 } from 'lucide-react';
 import {
   ResearchScope,
@@ -39,6 +43,7 @@ import {
   ResearchConversation,
   RetrievedEvidenceItem,
   StructuredAcademicResponse,
+  RehearsalJuryQuestion,
 } from '../../types/research';
 import { queryDissertationResearch } from '../../utils/researchApiClient';
 import { SupportedLang } from '../../data/translations';
@@ -50,19 +55,19 @@ interface ResearchStationViewProps {
   currentLang?: SupportedLang;
 }
 
-const STORAGE_CONVERSATIONS_KEY = 'zavalavoz_research_conversations_v2';
-const STORAGE_MESSAGES_KEY = 'zavalavoz_research_messages_v2';
+const STORAGE_CONVERSATIONS_KEY = 'zavalavoz_research_conversations_v3';
+const STORAGE_MESSAGES_KEY = 'zavalavoz_research_messages_v3';
 
-const SCOPES_CONFIG: { id: ResearchScope; labelPt: string; labelEn: string; icon: any }[] = [
-  { id: 'todos', labelPt: 'Toda a dissertação', labelEn: 'All dissertation', icon: BookOpen },
-  { id: 'dados', labelPt: 'Dados', labelEn: 'Data', icon: Database },
-  { id: 'metodologia', labelPt: 'Metodologia', labelEn: 'Methodology', icon: Layers },
-  { id: 'clima', labelPt: 'Clima', labelEn: 'Climate', icon: CloudRain },
-  { id: 'campo', labelPt: 'Campo', labelEn: 'Field', icon: Compass },
-  { id: 'entrevistas', labelPt: 'Entrevistas', labelEn: 'Interviews', icon: Users },
-  { id: 'sig', labelPt: 'SIG', labelEn: 'GIS', icon: Compass },
-  { id: 'defesa', labelPt: 'Defesa', labelEn: 'Defense', icon: ShieldCheck },
-  { id: 'resultados', labelPt: 'Resultados', labelEn: 'Results', icon: FileSpreadsheet },
+const SCOPES_CONFIG: { id: ResearchScope; labelPt: string; labelEn: string }[] = [
+  { id: 'todos', labelPt: 'Toda a dissertação', labelEn: 'All dissertation' },
+  { id: 'metodologia', labelPt: 'Metodologia', labelEn: 'Methodology' },
+  { id: 'dados', labelPt: 'Dados e estatística', labelEn: 'Data & statistics' },
+  { id: 'clima', labelPt: 'Clima e CHIRPS', labelEn: 'Climate & CHIRPS' },
+  { id: 'campo', labelPt: 'Trabalho de campo', labelEn: 'Fieldwork' },
+  { id: 'sig', labelPt: 'SIG', labelEn: 'GIS' },
+  { id: 'defesa', labelPt: 'Defesa', labelEn: 'Defense' },
+  { id: 'bibliografia', labelPt: 'Bibliografia', labelEn: 'Bibliography' },
+  { id: 'externo', labelPt: 'Conhecimento externo', labelEn: 'External knowledge' },
 ];
 
 const CANONICAL_EDITORIAL_SUGGESTIONS: { text: string; scope: ResearchScope; subtitle: string }[] = [
@@ -111,6 +116,15 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showMobileHistory, setShowMobileHistory] = useState(false);
+
+  // Modo Preparar para Defesa
+  const [defensePreparationMode, setDefensePreparationMode] = useState<boolean>(false);
+
+  // Controlo de exibição de perguntas de ensaio para a banca
+  const [expandedJuryQuestions, setExpandedJuryQuestions] = useState<Record<string, boolean>>({});
+
+  // Confirmação para limpeza de histórico
+  const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
 
   // Active Messages State
   const [messages, setMessages] = useState<ResearchMessage[]>(() => {
@@ -202,21 +216,14 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
     }
   };
 
-  const handleClearHistory = () => {
-    if (
-      window.confirm(
-        isPt
-          ? 'Deseja apagar todo o índice de consultas guardado no histórico local?'
-          : 'Clear all stored research history?'
-      )
-    ) {
-      setMessages([]);
-      setConversations([]);
-      localStorage.removeItem(STORAGE_MESSAGES_KEY);
-      localStorage.removeItem(STORAGE_CONVERSATIONS_KEY);
-      setActiveConversationId(`conv_${Date.now()}`);
-      setShowMobileHistory(false);
-    }
+  const handleConfirmClearHistory = () => {
+    setMessages([]);
+    setConversations([]);
+    localStorage.removeItem(STORAGE_MESSAGES_KEY);
+    localStorage.removeItem(STORAGE_CONVERSATIONS_KEY);
+    setActiveConversationId(`conv_${Date.now()}`);
+    setShowMobileHistory(false);
+    setShowClearConfirm(false);
   };
 
   const handleLoadSavedConversation = (conv: ResearchConversation) => {
@@ -226,9 +233,22 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
     setShowMobileHistory(false);
   };
 
-  const handleSendQuery = async (queryToSubmit?: string, scopeToUse?: ResearchScope) => {
+  const handleToggleJuryQuestion = (messageId: string) => {
+    setExpandedJuryQuestions((prev) => ({
+      ...prev,
+      [messageId]: !prev[messageId],
+    }));
+  };
+
+  const handleSendQuery = async (
+    queryToSubmit?: string,
+    scopeToUse?: ResearchScope,
+    overrideDefenseMode?: boolean
+  ) => {
     const textToSend = (queryToSubmit || inputText).trim();
     const currentScope = scopeToUse || activeScope;
+    const useDefenseMode =
+      overrideDefenseMode !== undefined ? overrideDefenseMode : defensePreparationMode;
 
     if (!textToSend || isLoading) return;
 
@@ -241,6 +261,7 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
       content: textToSend,
       timestamp: Date.now(),
       scope: currentScope,
+      defensePreparationMode: useDefenseMode,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -252,7 +273,13 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
         content: m.content,
       }));
 
-      const res = await queryDissertationResearch(textToSend, currentScope, history);
+      const res = await queryDissertationResearch(
+        textToSend,
+        currentScope,
+        history,
+        useDefenseMode,
+        true
+      );
 
       const assistantMessage: ResearchMessage = {
         id: `msg_asst_${Date.now()}`,
@@ -269,6 +296,8 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
         isExternalKnowledgeUsed: res.isExternalKnowledgeUsed,
         isFallback: res.isFallback,
         fallbackNotice: res.fallbackNotice,
+        defensePreparationMode: res.defensePreparationMode,
+        rehearsalQuestion: res.rehearsalQuestion,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -282,6 +311,15 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExplainForDefense = (msgIndex: number) => {
+    // Localizar a pergunta correspondente da utilizadora
+    const prevUserMsg = [...messages.slice(0, msgIndex)].reverse().find((m) => m.role === 'user');
+    if (prevUserMsg) {
+      setDefensePreparationMode(true);
+      handleSendQuery(prevUserMsg.content, prevUserMsg.scope, true);
     }
   };
 
@@ -364,6 +402,41 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
+      {/* Modal de Confirmação de Limpeza de Histórico */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-[#FCFAF6] border-2 border-[#2A3A24] rounded-[4px] p-5 max-w-md w-full space-y-3 shadow-lg">
+            <div className="flex items-center gap-2 text-[#A8531E]">
+              <AlertTriangle className="w-5 h-5" />
+              <h3 className="font-mono text-sm font-bold uppercase tracking-wider">
+                {isPt ? 'Limpar Histórico Local' : 'Clear Local History'}
+              </h3>
+            </div>
+            <p className="text-xs font-sans text-[#1A2417] leading-relaxed">
+              {isPt
+                ? 'Deseja apagar todas as consultas e índices guardados no histórico do navegador? Esta ação é irreversível e reinicializa a sessão.'
+                : 'Do you want to clear all queries stored in browser history? This action is irreversible.'}
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D9CDAF]">
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(false)}
+                className="px-3 py-1.5 rounded-[2px] bg-[#F4EFE6] text-[#57634F] hover:bg-[#EAE2D2] text-xs font-mono transition-colors cursor-pointer"
+              >
+                {isPt ? 'Cancelar' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmClearHistory}
+                className="px-3 py-1.5 rounded-[2px] bg-[#A8531E] text-[#FCFAF6] hover:bg-[#8F4315] text-xs font-mono font-semibold transition-colors cursor-pointer"
+              >
+                {isPt ? 'Confirmar Limpeza' : 'Confirm Clear'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Header do Manuscrito Vivo */}
       <header className="bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAE2D2]">
@@ -409,7 +482,7 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
             {conversations.length > 0 && (
               <button
                 type="button"
-                onClick={handleClearHistory}
+                onClick={() => setShowClearConfirm(true)}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[3px] text-[#57634F] hover:text-[#A8531E] hover:bg-[#F4EFE6] text-xs font-mono transition-colors cursor-pointer"
                 title={isPt ? 'Limpar histórico local guardado' : 'Clear history'}
               >
@@ -420,33 +493,33 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
           </div>
         </div>
 
-        {/* Filtro Temático de Escopo */}
-        <div className="pt-3">
-          <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#57634F] mb-1.5">
-            {isPt ? 'Contexto Temático:' : 'Thematic Scope:'}
+        {/* Selector Discreto de Consulta com Tipografia e Divisores Editoriais */}
+        <div className="pt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs font-mono">
+          <span className="font-bold text-[#1A2417] uppercase tracking-wider text-[11px] mr-1">
+            CONSULTA:
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            {SCOPES_CONFIG.map((sc) => {
-              const Icon = sc.icon;
-              const isSelected = activeScope === sc.id;
-              return (
+          {SCOPES_CONFIG.map((sc, sIdx) => {
+            const isSelected = activeScope === sc.id;
+            return (
+              <React.Fragment key={sc.id}>
                 <button
-                  key={sc.id}
                   type="button"
                   onClick={() => setActiveScope(sc.id)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] text-xs font-mono transition-colors cursor-pointer ${
+                  className={`px-1.5 py-0.5 rounded-[2px] transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-[#2A3A24] text-[#FCFAF6] font-semibold border border-[#2A3A24]'
-                      : 'bg-[#F4EFE6] text-[#57634F] hover:bg-[#EAE2D2] border border-[#D9CDAF]'
+                      ? 'bg-[#2A3A24] text-[#FCFAF6] font-bold'
+                      : 'text-[#57634F] hover:text-[#1A2417] hover:underline underline-offset-4'
                   }`}
                   aria-pressed={isSelected}
                 >
-                  <Icon className={`w-3 h-3 ${isSelected ? 'text-[#D9CDAF]' : 'text-[#57634F]'}`} />
-                  <span>{isPt ? sc.labelPt : sc.labelEn}</span>
+                  {isPt ? sc.labelPt : sc.labelEn}
                 </button>
-              );
-            })}
-          </div>
+                {sIdx < SCOPES_CONFIG.length - 1 && (
+                  <span className="text-[#D9CDAF] select-none text-[10px]">•</span>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
       </header>
 
@@ -544,12 +617,27 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
         <main className="lg:col-span-8 space-y-4">
           {/* COMPOSER / CAMPO DE PERGUNTA (Centro Funcional da Pesquisa) */}
           <section className="bg-[#FCFAF6] border border-[#D9CDAF] rounded-[4px] p-4 sm:p-5 space-y-3">
-            <label
-              htmlFor="research-inquiry-input"
-              className="block text-xs font-mono font-bold uppercase tracking-wider text-[#1A2417]"
-            >
-              {isPt ? 'Consulta ao Corpus Científico' : 'Scientific Corpus Query'}
-            </label>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="research-inquiry-input"
+                className="block text-xs font-mono font-bold uppercase tracking-wider text-[#1A2417]"
+              >
+                {isPt ? 'Consulta ao Corpus Científico' : 'Scientific Corpus Query'}
+              </label>
+
+              {/* Opção Preparar para Defesa */}
+              <label className="inline-flex items-center gap-2 text-xs font-mono text-[#1A2417] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={defensePreparationMode}
+                  onChange={(e) => setDefensePreparationMode(e.target.checked)}
+                  className="rounded border-[#D9CDAF] text-[#2A3A24] focus:ring-[#2A3A24] w-3.5 h-3.5 cursor-pointer"
+                />
+                <span className={defensePreparationMode ? 'font-bold text-[#A8531E]' : 'text-[#57634F]'}>
+                  {isPt ? 'Preparar para defesa (sustentação oral)' : 'Prepare for defense (oral format)'}
+                </span>
+              </label>
+            </div>
 
             <div className="relative">
               <textarea
@@ -562,8 +650,8 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                 disabled={isLoading}
                 placeholder={
                   isPt
-                    ? 'Pergunte sobre a dissertação, os dados, o campo ou a metodologia…'
-                    : 'Ask about the dissertation, data, fieldwork or methodology…'
+                    ? 'Faça uma pergunta sobre a dissertação…'
+                    : 'Ask a question about the dissertation…'
                 }
                 className="w-full p-3.5 pr-28 rounded-[3px] bg-[#FFFFFF] border border-[#D9CDAF] text-[#1A2417] text-sm font-sans focus:outline-none focus:ring-1 focus:ring-[#2A3A24] focus:border-[#2A3A24] resize-none placeholder:text-[#8C7D6B] leading-relaxed"
               />
@@ -583,10 +671,10 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-mono text-[#57634F] pt-0.5">
               <span className="font-serif italic">
-                Respostas fundamentadas no corpus científico da plataforma.
+                Enter para consultar • Shift + Enter para nova linha
               </span>
               <span className="text-[10px] uppercase tracking-wider">
-                {isPt ? `Contexto: ${activeScope.toUpperCase()}` : `Scope: ${activeScope.toUpperCase()}`} • Enter para submeter
+                {isPt ? `Contexto: ${activeScope.toUpperCase()}` : `Scope: ${activeScope.toUpperCase()}`}
               </span>
             </div>
           </section>
@@ -649,8 +737,14 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                       /* Bloco da Pergunta da Investigadora */
                       <div className="bg-[#EAE2D2] border-l-4 border-[#2A3A24] p-3.5 sm:p-4 rounded-[2px]">
                         <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-[#57634F] mb-1">
-                          <span className="font-bold uppercase tracking-wider text-[#1A2417]">
+                          <span className="font-bold uppercase tracking-wider text-[#1A2417] flex items-center gap-1.5">
+                            <MessageSquare className="w-3.5 h-3.5 text-[#2A3A24]" />
                             {isPt ? 'Pergunta da Investigadora' : 'Candidate Query'}
+                            {msg.defensePreparationMode && (
+                              <span className="ml-1 px-1.5 py-0.2 rounded-[2px] bg-[#A8531E] text-[#FCFAF6] text-[9px] font-mono font-bold">
+                                MODO DEFESA
+                              </span>
+                            )}
                           </span>
                           <span>
                             {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -665,7 +759,7 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                       </div>
                     ) : (
                       /* Bloco Académico da Resposta em 4 NÍVEIS DISCRETOS */
-                      <div className="border border-[#D9CDAF] bg-[#FFFFFF] rounded-[3px] p-4 sm:p-6 space-y-6">
+                      <div className="border border-[#D9CDAF] bg-[#FFFFFF] rounded-[3px] p-4 sm:p-6 space-y-5">
                         {/* 1. Cabeçalho Editorial do Bloco */}
                         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#EAE2D2]">
                           <div className="flex flex-wrap items-center gap-2">
@@ -673,8 +767,36 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                             {renderStatusCategoryBadge(msg.statusCategory)}
                           </div>
 
-                          {/* Ações Rápidas: Copiar e Ouvir no Estúdio */}
-                          <div className="flex items-center gap-2">
+                          {/* Ações Rápidas: Explicar para Defesa, Pergunta de Ensaio, Copiar, Áudio */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {/* Transformar em pergunta da banca */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleJuryQuestion(msg.id)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-mono transition-colors cursor-pointer border ${
+                                expandedJuryQuestions[msg.id]
+                                  ? 'bg-[#2A3A24] text-[#FCFAF6] border-[#2A3A24]'
+                                  : 'text-[#2A3A24] hover:bg-[#F4EFE6] border-[#D9CDAF]'
+                              }`}
+                              title={isPt ? 'Transformar em pergunta da banca examinadora' : 'Transform into jury question'}
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#A8531E]" />
+                              <span>{isPt ? 'Transformar em pergunta da banca' : 'Jury question'}</span>
+                            </button>
+
+                            {/* Explicar para a Defesa (se não for já formato oral) */}
+                            {!msg.structuredResponse?.oralDefense && (
+                              <button
+                                type="button"
+                                onClick={() => handleExplainForDefense(mIdx)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-mono text-[#A8531E] hover:bg-[#F4EFE6] border border-[#D9CDAF] transition-colors cursor-pointer"
+                                title={isPt ? 'Explicar com tom oral para sustentação perante a banca' : 'Explain for oral defense'}
+                              >
+                                <Mic className="w-3.5 h-3.5 text-[#A8531E]" />
+                                <span>{isPt ? 'Explicar para a defesa' : 'Explain for defense'}</span>
+                              </button>
+                            )}
+
                             {onSendToStudio && (
                               <button
                                 type="button"
@@ -715,7 +837,7 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Aviso de Fallback se aplicável */}
+                        {/* Aviso 1: Fallback se aplicável */}
                         {msg.fallbackNotice && (
                           <div className="p-2.5 rounded-[2px] bg-[#F4EFE6] border border-[#D9CDAF] text-[11px] font-mono text-[#57634F] flex items-center gap-2">
                             <Info className="w-3.5 h-3.5 text-[#A8531E] shrink-0" />
@@ -723,15 +845,155 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                           </div>
                         )}
 
-                        {/* NÍVEL 1: RESPOSTA (Texto contínuo e académico) */}
+                        {/* Aviso 2: Contextualização Externa (Obrigatório Secção 18) */}
+                        {(msg.isExternalKnowledgeUsed ||
+                          msg.statusCategory === 'CONTEXTUALIZAÇÃO EXTERNA' ||
+                          msg.structuredResponse?.externalContextNotice) && (
+                          <div className="p-3 rounded-[2px] bg-[#F4EFE6] border-l-4 border-[#8C7D6B] border-y border-r border-[#D9CDAF] text-xs font-mono space-y-0.5">
+                            <span className="font-bold uppercase tracking-wider text-[10px] block text-[#554A3D]">
+                              CONTEXTUALIZAÇÃO EXTERNA
+                            </span>
+                            <p className="font-sans text-[#1A2417] italic">
+                              “Esta informação não pertence ao corpus documental da dissertação.”
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Aviso 3: Lacuna Documental (Obrigatório Secção 19) */}
+                        {(msg.statusCategory === 'SUPORTE INSUFICIENTE' ||
+                          msg.structuredResponse?.dataGapNotice) && (
+                          <div className="p-3 rounded-[2px] bg-[#F4EFE6] border-l-4 border-[#A8531E] border-y border-r border-[#D9CDAF] text-xs font-mono space-y-0.5">
+                            <span className="font-bold uppercase tracking-wider text-[10px] block text-[#A8531E]">
+                              LACUNA DOCUMENTAL
+                            </span>
+                            <p className="font-sans text-[#1A2417] italic">
+                              “Não encontrei evidência suficiente no corpus científico da plataforma para sustentar essa afirmação.”
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Bloco de Pergunta da Banca Expandido (Secção 12) */}
+                        {expandedJuryQuestions[msg.id] && msg.rehearsalQuestion && (
+                          <div className="p-4 rounded-[3px] bg-[#F4EFE6] border-2 border-[#2A3A24] space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D9CDAF] pb-2">
+                              <span className="px-2 py-0.5 rounded-[2px] bg-[#2A3A24] text-[#FCFAF6] font-mono text-[10px] font-bold uppercase tracking-wider">
+                                PERGUNTA GERADA PARA ENSAIO
+                              </span>
+                              <span className="text-[10px] font-mono text-[#57634F]">
+                                Cenário: {msg.rehearsalQuestion.scenario}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A8531E]">
+                                Pergunta do Examinador:
+                              </span>
+                              <p className="text-sm sm:text-base font-display font-medium text-[#1A2417] italic">
+                                “{msg.rehearsalQuestion.examinerQuestion}”
+                              </p>
+                            </div>
+
+                            {msg.rehearsalQuestion.vulnerabilityCode && (
+                              <div className="text-xs font-mono text-[#57634F] bg-[#FCFAF6] p-2 rounded-[2px] border border-[#D9CDAF]">
+                                <span className="font-bold text-[#A8531E]">Vulnerabilidade Relacionada: </span>
+                                <span>
+                                  {msg.rehearsalQuestion.vulnerabilityCode} — {msg.rehearsalQuestion.vulnerabilityTitle}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                              <div className="p-2.5 rounded-[2px] bg-[#FCFAF6] border border-[#D9CDAF] space-y-0.5">
+                                <span className="font-mono font-bold text-[10px] text-[#2A3A24] uppercase block">
+                                  Evidência Documental:
+                                </span>
+                                <p className="font-sans text-[#57634F] text-[11px] leading-snug">
+                                  {msg.rehearsalQuestion.supportingEvidence}
+                                </p>
+                              </div>
+                              <div className="p-2.5 rounded-[2px] bg-[#FCFAF6] border border-[#D9CDAF] space-y-0.5">
+                                <span className="font-mono font-bold text-[10px] text-[#A8531E] uppercase block">
+                                  Ângulo de Sustentação:
+                                </span>
+                                <p className="font-sans text-[#57634F] text-[11px] leading-snug">
+                                  {msg.rehearsalQuestion.defenseAngle}
+                                </p>
+                              </div>
+                            </div>
+
+                            {onNavigateToTab && (
+                              <div className="pt-2 border-t border-[#D9CDAF] flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    onNavigateToTab('defesa', msg.rehearsalQuestion?.vulnerabilityCode || undefined)
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] bg-[#2A3A24] text-[#FCFAF6] hover:bg-[#1A2417] text-xs font-mono font-semibold transition-colors cursor-pointer"
+                                >
+                                  <span>Praticar na Defesa</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* NÍVEL 1: RESPOSTA (Texto contínuo académico ou Sustentação Oral em 4 partes) */}
                         <div className="space-y-2">
                           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#A8531E] flex items-center gap-1.5">
                             <FileText className="w-3.5 h-3.5" />
-                            <span>RESPOSTA</span>
+                            <span>
+                              {msg.structuredResponse?.oralDefense
+                                ? 'SUSTENTAÇÃO ORAL PARA DEFESA'
+                                : 'RESPOSTA'}
+                            </span>
                           </h3>
-                          <div className="text-sm sm:text-base font-sans text-[#1A2417] leading-relaxed whitespace-pre-wrap">
-                            {msg.structuredResponse?.answerText || msg.content}
-                          </div>
+
+                          {msg.structuredResponse?.oralDefense ? (
+                            /* Modo Sustentação Oral (EU DIRIA / OS DADOS MOSTRAM / CONTUDO / POR ISSO) */
+                            <div className="space-y-3 bg-[#F4EFE6] border border-[#D9CDAF] rounded-[3px] p-4">
+                              <div className="space-y-1">
+                                <span className="font-mono font-bold text-xs text-[#A8531E] block">
+                                  EU DIRIA...
+                                </span>
+                                <p className="text-sm sm:text-base font-sans leading-relaxed pl-3 border-l-2 border-[#A8531E] font-medium text-[#1A2417]">
+                                  {msg.structuredResponse.oralDefense.euDiria}
+                                </p>
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="font-mono font-bold text-xs text-[#2A3A24] block">
+                                  OS DADOS MOSTRAM...
+                                </span>
+                                <p className="text-sm font-sans leading-relaxed pl-3 border-l-2 border-[#2A3A24] text-[#1A2417]">
+                                  {msg.structuredResponse.oralDefense.osDadosMostram}
+                                </p>
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="font-mono font-bold text-xs text-[#57634F] block">
+                                  CONTUDO...
+                                </span>
+                                <p className="text-sm font-sans leading-relaxed pl-3 border-l-2 border-[#57634F] italic text-[#2C3727]">
+                                  {msg.structuredResponse.oralDefense.contudo}
+                                </p>
+                              </div>
+
+                              <div className="space-y-1">
+                                <span className="font-mono font-bold text-xs text-[#1A2417] block">
+                                  POR ISSO...
+                                </span>
+                                <p className="text-sm sm:text-base font-sans leading-relaxed pl-3 border-l-2 border-[#1A2417] font-medium text-[#1A2417]">
+                                  {msg.structuredResponse.oralDefense.porIsso}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Formato Padrão Editorial */
+                            <div className="text-sm sm:text-base font-sans text-[#1A2417] leading-relaxed whitespace-pre-wrap">
+                              {msg.structuredResponse?.answerText || msg.content}
+                            </div>
+                          )}
                         </div>
 
                         {/* NÍVEL 2: EVIDÊNCIA (Fontes internas com rastreabilidade) */}
@@ -762,9 +1024,9 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                                         type="button"
                                         onClick={() => onNavigateToTab(ev.targetTab!, ev.targetParam)}
                                         className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold text-[#2A3A24] hover:text-[#A8531E] hover:underline cursor-pointer shrink-0"
-                                        title={`Abrir no contexto da aba ${ev.targetTab}`}
+                                        title={`Ver evidência no contexto da aba ${ev.targetTab}`}
                                       >
-                                        <span>{ev.contextActionLabel || 'Ver no contexto'}</span>
+                                        <span>{isPt ? 'Ver evidência' : 'View evidence'}</span>
                                         <ExternalLink className="w-3 h-3" />
                                       </button>
                                     )}
@@ -859,7 +1121,7 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                     <div className="w-4 h-4 border-2 border-[#A8531E] border-t-transparent rounded-full animate-spin"></div>
                     <div className="text-xs font-mono text-[#57634F] space-y-0.5">
                       <p className="font-bold text-[#1A2417] uppercase tracking-wider">
-                        Consultando o Índice Científico de Zavala...
+                        {isPt ? 'A consultar o corpus científico…' : 'Querying scientific corpus…'}
                       </p>
                       <p className="text-[11px] text-[#8C7D6B]">
                         Recuperando evidências do SSoT, verificando estatuto epistemológico e formatando resposta editorial.

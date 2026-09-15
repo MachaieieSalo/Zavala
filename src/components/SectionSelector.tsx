@@ -28,7 +28,8 @@ import {
   generateAcademicEvaluation,
   EvaluationFeedback,
 } from './defense/defenseKnowledge';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Award } from 'lucide-react';
+import { AdaptiveDefenseRoomView } from './defense/AdaptiveDefenseRoomView';
 
 interface SectionSelectorProps {
   onSelectQuestionText: (text: string, title: string, questionId?: string) => void;
@@ -57,8 +58,8 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
 }) => {
   const isPt = currentLang === 'pt';
 
-  // Mode: 'estudo' (exploração de perguntas) vs 'simulador' (banca aleatória) vs 'adversarial' (banca com objecções reais)
-  const [activeMode, setActiveMode] = useState<'estudo' | 'simulador' | 'adversarial'>('estudo');
+  // Mode: 'estudo' vs 'simulador' vs 'adversarial' vs 'banca_digital'
+  const [activeMode, setActiveMode] = useState<'estudo' | 'simulador' | 'adversarial' | 'banca_digital'>('estudo');
 
   useEffect(() => {
     if (initialAdversarialCode) {
@@ -405,6 +406,25 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
               <ShieldAlert className="w-3.5 h-3.5 text-[#D9CDAF]" />
               <span>{isPt ? 'Banca Adversarial' : 'Adversarial Board'}</span>
             </button>
+            <button
+              id="tab-banca-digital"
+              role="tab"
+              aria-selected={activeMode === 'banca_digital'}
+              aria-controls="panel-defesa"
+              type="button"
+              onClick={() => {
+                setActiveMode('banca_digital');
+                setIsMockFinished(false);
+              }}
+              className={`px-3 py-1.5 rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-[#2A3A24] ${
+                activeMode === 'banca_digital'
+                  ? 'bg-[#1A2417] text-[#FCFAF6] font-semibold ring-1 ring-[#D9CDAF]'
+                  : 'text-[#4F5C48] hover:text-[#1A2417]'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5 text-[#D9CDAF]" />
+              <span>{isPt ? 'Banca Digital Adaptativa (Fase 14)' : 'Adaptive Digital Board'}</span>
+            </button>
           </div>
 
           {activeMode === 'simulador' && !isMockFinished && (
@@ -446,8 +466,13 @@ export const SectionSelector: React.FC<SectionSelectorProps> = ({
         </div>
       </div>
 
-      {/* ADVERSARIAL BOARD WORKSTATION */}
-      {activeMode === 'adversarial' ? (
+      {/* BANCA DIGITAL ADAPTATIVA (FASE 14) */}
+      {activeMode === 'banca_digital' ? (
+        <AdaptiveDefenseRoomView
+          onPlayQuickSpeech={onPlayQuickSpeech}
+          currentLang={currentLang}
+        />
+      ) : activeMode === 'adversarial' ? (
         <DefenseAdversarialView
           questions={adversarialQuestions}
           selectedQuestionId={selectedQuestionId}

@@ -7,6 +7,17 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import lamejs from '@breezystack/lamejs';
 import { handleResearchQuery } from './server/researchEngine';
+import {
+  evaluateCandidateResponse,
+  selectNextAdaptiveQuestion,
+  generateFinalDefenseReport,
+  generateModelCandidateResponse,
+  EXAMINER_PROFILES,
+  CANONICAL_ADAPTIVE_QUESTIONS,
+  ExaminerId,
+  DefenseTone,
+  ArgumentationStepRecord,
+} from './src/data/adaptiveDefenseEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +79,91 @@ app.post('/api/research/query', async (req: Request, res: Response) => {
       error: userMessage,
       details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
     });
+  }
+});
+
+// FASE 14: SALA DE BANCA DIGITAL & SIMULAÇÃO CIENTÍFICA ADAPTATIVA
+app.get('/api/defense/adaptive/examiners', (req: Request, res: Response) => {
+  res.json({
+    examiners: Object.values(EXAMINER_PROFILES),
+    initialQuestions: CANONICAL_ADAPTIVE_QUESTIONS,
+  });
+});
+
+app.post('/api/defense/adaptive/evaluate', (req: Request, res: Response) => {
+  try {
+    const { question, candidateResponse, examinerId, tone, history, sessionLength } = req.body;
+    if (!question || !candidateResponse) {
+      return res.status(400).json({ error: 'Pergunta e resposta da candidata são obrigatórias.' });
+    }
+
+    const examinerProfile = EXAMINER_PROFILES[examinerId as ExaminerId] || EXAMINER_PROFILES.metodologia_estatistica;
+    const selectedTone: DefenseTone = tone === 'hostil' ? 'hostil' : 'realista';
+
+    const result = evaluateCandidateResponse({
+      question,
+      candidateResponse,
+      examinerProfile,
+      tone: selectedTone,
+      history: history || [],
+      sessionLength: sessionLength || 5,
+    });
+
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error in /api/defense/adaptive/evaluate:', error);
+    return res.status(500).json({ error: 'Falha ao avaliar resposta adaptativa da candidata.' });
+  }
+});
+
+app.post('/api/defense/adaptive/next-question', (req: Request, res: Response) => {
+  try {
+    const { currentQuestion, evalResult, examinerId, usedQuestionIds } = req.body;
+    const selectedExaminerId: ExaminerId = examinerId || 'metodologia_estatistica';
+    const usedSet = new Set<string>(Array.isArray(usedQuestionIds) ? usedQuestionIds : []);
+
+    const nextQ = selectNextAdaptiveQuestion(
+      currentQuestion,
+      evalResult,
+      selectedExaminerId,
+      usedSet
+    );
+
+    return res.json(nextQ);
+  } catch (error: any) {
+    console.error('Error in /api/defense/adaptive/next-question:', error);
+    return res.status(500).json({ error: 'Falha ao selecionar a próxima questão adaptativa.' });
+  }
+});
+
+app.post('/api/defense/adaptive/report', (req: Request, res: Response) => {
+  try {
+    const { sessionId, startedAt, examinerId, tone, history } = req.body;
+    const report = generateFinalDefenseReport(
+      sessionId || `sess_${Date.now()}`,
+      startedAt || new Date().toISOString(),
+      (examinerId as ExaminerId) || 'metodologia_estatistica',
+      (tone as DefenseTone) || 'realista',
+      (history as ArgumentationStepRecord[]) || []
+    );
+    return res.json(report);
+  } catch (error: any) {
+    console.error('Error in /api/defense/adaptive/report:', error);
+    return res.status(500).json({ error: 'Falha ao gerar relatório final da banca.' });
+  }
+});
+
+app.post('/api/defense/adaptive/train-response', (req: Request, res: Response) => {
+  try {
+    const { question } = req.body;
+    if (!question) {
+      return res.status(400).json({ error: 'Questão é necessária para gerar resposta modelo.' });
+    }
+    const modelResponse = generateModelCandidateResponse(question);
+    return res.json(modelResponse);
+  } catch (error: any) {
+    console.error('Error in /api/defense/adaptive/train-response:', error);
+    return res.status(500).json({ error: 'Falha ao gerar modelo de resposta de treino.' });
   }
 });
 

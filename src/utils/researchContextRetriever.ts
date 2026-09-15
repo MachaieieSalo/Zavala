@@ -438,9 +438,15 @@ export function retrieveScientificContext(
     }
   });
 
-  // Detecção de termos explicitamente não cobertos pela dissertação (anti-alucinação)
-  const isQueryClearlyOutOfScope =
-    /\b(trigo|soja|milho\s+hibrido|trator|john\s+deere|adubo\s+npk\s+importado|capital\s+de|presidente\s+de|fao\s+definicao\s+geral|fao\s+mundial)\b/i.test(
+  // Detecção de termos que exigem contextualização externa ou constituem lacuna documental
+  const isExternalKnowledgeTopic =
+    scope === 'externo' ||
+    /\b(fao\s+mundial|fao\s+internacional|definicao\s+geral|seguranca\s+alimentar\s+a\s+nivel\s+global|literatura\s+externa|conceito\s+global|teoria\s+geral)\b/i.test(
+      query
+    );
+
+  const isOutOfCorpusDataGap =
+    /\b(trigo|soja|milho\s+hibrido|trator|john\s+deere|adubo\s+npk\s+importado|capital\s+de|presidente\s+de|espectroscopia|teor\s+de\s+amido|laboratorio\s+molecular)\b/i.test(
       query
     );
 
@@ -449,26 +455,56 @@ export function retrieveScientificContext(
   const uniqueItems: RetrievedEvidenceItem[] = [];
   const seenIds = new Set<string>();
 
-  for (const entry of matchedEvidences) {
-    if (!seenIds.has(entry.item.id)) {
-      seenIds.add(entry.item.id);
-      uniqueItems.push(entry.item);
-      if (uniqueItems.length >= 7) break;
+  if (!isOutOfCorpusDataGap) {
+    for (const entry of matchedEvidences) {
+      if (!seenIds.has(entry.item.id)) {
+        seenIds.add(entry.item.id);
+        uniqueItems.push(entry.item);
+        if (uniqueItems.length >= 7) break;
+      }
     }
   }
 
   // Análise de Suficiência da Evidência
-  const hasDirectMatch = uniqueItems.length > 0 && !isQueryClearlyOutOfScope;
-  const isInsufficientEvidence = !hasDirectMatch && !isQueryClearlyOutOfScope;
-  const isExternalKnowledgeNeeded = isQueryClearlyOutOfScope;
+  const hasDirectMatch = uniqueItems.length > 0 && !isOutOfCorpusDataGap && !isExternalKnowledgeTopic;
+  const isInsufficientEvidence = isOutOfCorpusDataGap || (!hasDirectMatch && !isExternalKnowledgeTopic && uniqueItems.length === 0);
+  const isExternalKnowledgeNeeded = isExternalKnowledgeTopic;
 
   // Determinar estatuto epistemológico predominante
   let primaryEpistemicStatus: EpistemicStatus = 'INTERPRETAÇÃO';
 
   if (isExternalKnowledgeNeeded) {
     primaryEpistemicStatus = 'CONTEXTUALIZAÇÃO EXTERNA';
+    uniqueItems.unshift({
+      id: 'external_knowledge_ref',
+      hierarchyLevel: 'NÍVEL 5: Conhecimento Geral do Modelo',
+      section: 'Contextualização Externa à Dissertação',
+      component: 'Literatura e Quadros Conceituais Internacionais',
+      source: 'Literatura Externa',
+      internalReference: 'Enquadramento Teórico Externo',
+      provenanceTrail: 'Literatura Externa → Nível 5',
+      epistemicStatus: 'CONTEXTUALIZAÇÃO EXTERNA',
+      contextActionLabel: 'Ver contexto externo',
+      snippet:
+        'Contextualização externa à dissertação. Esta informação não pertence ao corpus documental da dissertação de Yolanda Tamele sobre o Distrito de Zavala.',
+    });
   } else if (isInsufficientEvidence) {
     primaryEpistemicStatus = 'INTERPRETAÇÃO';
+    uniqueItems.unshift({
+      id: 'thesis_data_gap',
+      hierarchyLevel: 'NÍVEL 1: SSoT Científico',
+      section: 'Registo de Limites e Lacunas Documentais',
+      component: 'Fronteira Temática da Dissertação',
+      source: 'thesisScientificData.ts • Limites do Estudo',
+      internalReference: 'Lacuna Documental · Fora do Escopo',
+      provenanceTrail: 'SSoT → Limites do Corpus Documental',
+      epistemicStatus: 'INTERPRETAÇÃO',
+      contextActionLabel: 'Ver limitações',
+      snippet:
+        'Não encontrei evidência suficiente no corpus científico da plataforma para sustentar essa afirmação. A dissertação centra-se estritamente na mandioca em Zavala (1994–2024).',
+      targetTab: 'dados',
+      targetParam: 'limitacoes',
+    });
   } else if (matchedYearNum !== undefined) {
     primaryEpistemicStatus = matchedYearNum >= 2017 ? 'OBSERVADO' : 'RECONSTITUÍDO / MODELADO';
   } else if (
@@ -490,7 +526,7 @@ export function retrieveScientificContext(
   }
 
   // Se não houver correspondência directa e não for explicitamente fora de escopo, fornecer síntese de segurança
-  if (uniqueItems.length === 0) {
+  if (uniqueItems.length === 0 && !isInsufficientEvidence && !isExternalKnowledgeNeeded) {
     uniqueItems.push({
       id: 'thesis_core_summary',
       hierarchyLevel: 'NÍVEL 1: SSoT Científico',

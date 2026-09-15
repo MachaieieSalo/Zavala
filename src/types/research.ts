@@ -5,13 +5,15 @@
 
 export type ResearchScope =
   | 'todos'
-  | 'dados'
   | 'metodologia'
+  | 'dados'
   | 'clima'
   | 'campo'
-  | 'entrevistas'
   | 'sig'
   | 'defesa'
+  | 'bibliografia'
+  | 'externo'
+  | 'entrevistas'
   | 'resultados';
 
 export type EpistemicStatus =
@@ -70,11 +72,32 @@ export interface EpistemicGuardrailAlert {
   remedyApplied: string;
 }
 
+export interface OralDefenseStructure {
+  euDiria: string;
+  osDadosMostram: string;
+  contudo: string;
+  porIsso: string;
+}
+
+export interface RehearsalJuryQuestion {
+  id: string;
+  scenario: string; // ex: "Examinador Crítico de Metodologia e Modelação"
+  examinerQuestion: string; // Pergunta plausível de examinador
+  vulnerabilityCode?: string; // ex: "V_01_TEMPORAL", "V_04_CAUSAL"
+  vulnerabilityTitle?: string;
+  supportingEvidence: string;
+  defenseAngle: string;
+  classification: 'PERGUNTA GERADA PARA ENSAIO';
+}
+
 export interface StructuredAcademicResponse {
   answerText: string; // RESPOSTA: Explicação principal em texto contínuo e académico
   evidenceSummary?: string; // EVIDÊNCIA: Fontes e dados utilizados
   interpretationBreakdown?: string; // INTERPRETAÇÃO: Separação de dado documentado vs interpretação vs inferência
   methodologicalLimitation?: string; // LIMITAÇÃO: Limitação metodológica relevante
+  oralDefense?: OralDefenseStructure; // Estrutura oral para modo "Preparar para defesa"
+  externalContextNotice?: string; // Aviso obrigatório quando há conhecimento externo
+  dataGapNotice?: string; // Aviso obrigatório quando há lacuna documental
 }
 
 export interface ResearchMessage {
@@ -92,6 +115,8 @@ export interface ResearchMessage {
   isExternalKnowledgeUsed?: boolean;
   isFallback?: boolean;
   fallbackNotice?: string;
+  defensePreparationMode?: boolean;
+  rehearsalQuestion?: RehearsalJuryQuestion;
 }
 
 export interface ResearchConversation {
@@ -101,12 +126,15 @@ export interface ResearchConversation {
   updatedAt: number;
   scope: ResearchScope;
   messages: ResearchMessage[];
+  defensePreparationMode?: boolean;
 }
 
 export interface ResearchQueryRequest {
   query: string;
   scope?: ResearchScope;
   history?: { role: 'user' | 'assistant'; content: string }[];
+  defensePreparationMode?: boolean; // Modo "Preparar para defesa"
+  generateJuryQuestion?: boolean; // Modo "Transformar em pergunta da banca"
 }
 
 export interface ResearchQueryResponse {
@@ -123,4 +151,6 @@ export interface ResearchQueryResponse {
   isExternalKnowledgeUsed: boolean;
   isFallback: boolean;
   fallbackNotice?: string;
+  defensePreparationMode?: boolean;
+  rehearsalQuestion?: RehearsalJuryQuestion;
 }

@@ -12,12 +12,16 @@ import {
 export async function queryDissertationResearch(
   query: string,
   scope: ResearchScope = 'todos',
-  history: { role: 'user' | 'assistant'; content: string }[] = []
+  history: { role: 'user' | 'assistant'; content: string }[] = [],
+  defensePreparationMode: boolean = false,
+  generateJuryQuestion: boolean = false
 ): Promise<ResearchQueryResponse> {
   const payload: ResearchQueryRequest = {
     query: query.trim(),
     scope,
     history,
+    defensePreparationMode,
+    generateJuryQuestion,
   };
 
   const response = await fetch('/api/research/query', {
