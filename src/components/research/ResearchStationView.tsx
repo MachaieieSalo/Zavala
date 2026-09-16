@@ -987,6 +987,28 @@ export const ResearchStationView: React.FC<ResearchStationViewProps> = ({
                                   {msg.structuredResponse.oralDefense.porIsso}
                                 </p>
                               </div>
+
+                              {msg.structuredResponse.oralDefense.seABancaApertar && (
+                                <div className="space-y-1 pt-2 border-t border-[#D9CDAF]/60">
+                                  <span className="font-mono font-bold text-xs text-[#8C2D19] block">
+                                    SE A BANCA APERTAR...
+                                  </span>
+                                  <p className="text-sm font-sans leading-relaxed pl-3 border-l-2 border-[#8C2D19] italic text-[#1A2417]">
+                                    {msg.structuredResponse.oralDefense.seABancaApertar}
+                                  </p>
+                                </div>
+                              )}
+
+                              {msg.structuredResponse.oralDefense.resposta && (
+                                <div className="space-y-1">
+                                  <span className="font-mono font-bold text-xs text-[#1A2417] block">
+                                    RESPOSTA
+                                  </span>
+                                  <p className="text-sm sm:text-base font-sans leading-relaxed pl-3 border-l-2 border-[#1A2417] font-medium text-[#1A2417]">
+                                    {msg.structuredResponse.oralDefense.resposta}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             /* Formato Padrão Editorial */

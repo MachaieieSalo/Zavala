@@ -289,13 +289,38 @@ export function retrieveScientificContext(
             provenanceTrail: `Dissertação → Metodologia → Camada ${layer.layerNumber} (${layer.title})`,
             epistemicStatus: 'MODELADO',
             contextActionLabel: 'Ver metodologia',
-            snippet: `${layer.title}: ${layer.shortDesc}. Detalhes: ${layer.details[0] || ''}`,
+            snippet: `${layer.title}: ${layer.shortDesc}. Detalhes: ${layer.details.join(' ')}`,
             targetTab: 'dados',
             targetParam: 'metodologia',
           },
         });
       }
     });
+
+    // Proporção de 15% e Calibração Distrital (Zavala ~15% de Inhambane)
+    if (
+      normQuery.includes('15') ||
+      normQuery.includes('proporcao') ||
+      normQuery.includes('cento')
+    ) {
+      matchedEvidences.push({
+        score: 50,
+        item: {
+          id: 'thesis_proportion_15_percent',
+          hierarchyLevel: 'NÍVEL 2: Texto e Evidências da Dissertação',
+          section: 'Metodologia e Calibração Distrital (Proporção ~15%)',
+          component: 'Calibração Distrital Zavala / Inhambane',
+          source: 'thesisModelData.ts • Camada 1 & WB Jobs WP No.31',
+          internalReference: 'Estação de Dados · Calibração Distrital (~15%)',
+          provenanceTrail: 'Dissertação → Metodologia → Calibração Zavala ~15% de Inhambane',
+          epistemicStatus: 'MODELADO',
+          contextActionLabel: 'Ver metodologia',
+          snippet: 'A referência à proporção de aproximadamente ~15% corresponde à calibração metodológica da participação do Distrito de Zavala na produção provincial de mandioca de Inhambane (base: inquéritos do projecto PROSUL 2014-2019 e World Bank Jobs WP No. 31 sobre 127.000 ha provinciais). Adicionalmente, a dissertação incorpora bandas de confiança e incerteza de ±15% para anos regulares e analisa o potencial de incorporação obrigatória de 15% de farinha de mandioca de alta qualidade (HQCF) no fabrico de pão de trigo.',
+          targetTab: 'dados',
+          targetParam: 'metodologia',
+        },
+      });
+    }
   }
 
   // -------------------------------------------------------------

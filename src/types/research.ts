@@ -77,6 +77,8 @@ export interface OralDefenseStructure {
   osDadosMostram: string;
   contudo: string;
   porIsso: string;
+  seABancaApertar?: string;
+  resposta?: string;
 }
 
 export interface RehearsalJuryQuestion {
@@ -117,6 +119,71 @@ export interface ResearchMessage {
   fallbackNotice?: string;
   defensePreparationMode?: boolean;
   rehearsalQuestion?: RehearsalJuryQuestion;
+  llmState?: LLMExecutionState;
+}
+
+export type LLMExecutionState =
+  | 'LLM_AVAILABLE'
+  | 'LLM_UNAVAILABLE_NO_CREDITS'
+  | 'LLM_UNAVAILABLE_TIMEOUT'
+  | 'LLM_UNAVAILABLE_NETWORK'
+  | 'LLM_ERROR';
+
+export type QuestionIntentType =
+  | 'FACTUAL_METRIC'
+  | 'CONCEPTUAL_EXPLANATION'
+  | 'HYPOTHESIS_VERIFICATION'
+  | 'OUT_OF_CORPUS'
+  | 'EXTERNAL_KNOWLEDGE'
+  | 'DEFENSE_ORAL'
+  | 'OPEN_RESEARCH';
+
+export interface AnalyzedResearchQuestion {
+  originalQuery: string;
+  normalizedQuery: string;
+  intent: QuestionIntentType;
+  detectedYears: number[];
+  detectedMetrics: string[];
+  detectedEntities: string[];
+  isProportion15Percent: boolean;
+  isHypothesisOrBinaryQuestion: boolean;
+  isExternalTopic: boolean;
+  isDataGapTopic: boolean;
+  isDefenseMode: boolean;
+}
+
+export interface CanonicalFact {
+  id: string;
+  topic: string;
+  key: string;
+  value: string | number;
+  unit?: string;
+  epistemicStatus: EpistemicStatus;
+  source: string;
+  exactText: string;
+}
+
+export interface DeterministicEvaluation {
+  facts: CanonicalFact[];
+  primaryEpistemicStatus: EpistemicStatus;
+  statusCategory: ResponseStatusCategory;
+  guardrails: EpistemicGuardrailAlert[];
+  directAnswerLead: string;
+  evidenceSummary: string;
+  interpretationBreakdown: string;
+  limitation: string;
+}
+
+export interface HybridResearchContext {
+  question: string;
+  retrievedEvidence: RetrievedEvidenceItem[];
+  deterministicFacts: CanonicalFact[];
+  epistemicStatus: EpistemicStatus[];
+  guardrails: EpistemicGuardrailAlert[];
+  llmResponse?: string;
+  llmAvailable: boolean;
+  llmState: LLMExecutionState;
+  rawLlmError?: string;
 }
 
 export interface ResearchConversation {
@@ -153,4 +220,6 @@ export interface ResearchQueryResponse {
   fallbackNotice?: string;
   defensePreparationMode?: boolean;
   rehearsalQuestion?: RehearsalJuryQuestion;
+  llmState?: LLMExecutionState;
+  deterministicFacts?: CanonicalFact[];
 }

@@ -418,7 +418,7 @@ export function buildSearchIndex(): SearchResultItem[] {
     items.push({
       id: `cross_${ce.id}`,
       category: 'metodologia',
-      categoryLabel: 'Conceitos e Metodologia',
+      categoryLabel: 'Evidência Cruzada e Metodologia',
       evidenceType: 'triangulacao',
       evidenceTypeLabel: 'Nó de Triangulação Metodológica',
       title: `Triangulação: ${ce.title}`,

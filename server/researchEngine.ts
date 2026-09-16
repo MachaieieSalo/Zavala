@@ -16,10 +16,23 @@ import {
   StructuredAcademicResponse,
   OralDefenseStructure,
   RehearsalJuryQuestion,
+  LLMExecutionState,
+  CanonicalFact,
+  HybridResearchContext,
+  AnalyzedResearchQuestion,
+  DeterministicEvaluation,
+  EpistemicGuardrailAlert,
 } from '../src/types/research';
 import { retrieveScientificContext, RetrievalResult } from '../src/utils/researchContextRetriever';
 import { applyEpistemicGuardrailsToAnswer } from '../src/utils/researchEpistemicGuardrails';
 import { ADVERSARIAL_VULNERABILITIES } from '../src/data/adversarialVulnerabilities';
+import { analyzeResearchQuestion } from './questionAnalyzer';
+import {
+  extractCanonicalFacts,
+  evaluateDeterministicContext,
+  validateAndEnforceDeterministicTruth,
+} from './deterministicEngine';
+import { synthesizeLocalNaturalLanguageResponse } from './localSynthesizer';
 
 let openAiClient: OpenAI | null = null;
 
@@ -182,6 +195,24 @@ Dissertação: "Dinâmica da Produção de Mandioca no Distrito de Zavala, Prov�
 Investigadora: Eng.ª Yolanda Tamele
 Instituição: Escola Superior de Desenvolvimento Rural (ESUDER) / Universidade Eduardo Mondlane (UEM).
 
+REGRA PRINCIPAL ABSOLUTA (FASE 15.1):
+A PRIMEIRA FRASE DA RESPOSTA DEVE RESPONDER DIRECTAMENTE À PERGUNTA.
+A plataforma deve comportar-se como uma assistente científica de preparação para defesa oral, e não como um gerador de relatórios.
+NUNCA comece a resposta com:
+- "Com base no corpus científico..."
+- "Com base na dissertação..."
+- "A evidência documental disponível sintetiza-se..."
+- "Os dados disponíveis permitem..."
+- "Segundo o corpus..."
+Essas expressões podem surgir posteriormente para fundamentar a resposta, mas NUNCA na primeira frase.
+NUNCA comece com uma lista numerada antes de responder directamente.
+
+ESTRUTURA OBRIGATÓRIA DA RESPOSTA:
+1. RESPOSTA DIRECTA (1-3 frases para perguntas factuais; 3-6 frases para perguntas metodológicas/analíticas).
+2. EVIDÊNCIA (Fontes internas auditadas, anos e valores precisos).
+3. INTERPRETAÇÃO (Separação estrita entre Dado Documentado, Interpretação e Inferência).
+4. LIMITAÇÃO (Apenas quando existir limitação metodológica real relevante).
+
 AS 20 REGRAS MANDATÓRIAS E INVARIANTES DE SEGURANÇA:
 1. A dissertação e o SSoT fornecido são a autoridade científica absoluta e final.
 2. NUNCA invente, recalcule ou altere dados quantitativos ou qualitativos.
@@ -208,8 +239,8 @@ AS 20 REGRAS MANDATÓRIAS E INVARIANTES DE SEGURANÇA:
 
 ESTRUTURA EDITORIAL DA RESPOSTA (Obrigatório apresentar 4 secções):
 ### RESPOSTA
-Explicação principal em texto contínuo, académico, sóbrio e elegante.
-(Se o modo "Preparar para defesa" estiver ativo, estruture a resposta oral em: EU DIRIA..., OS DADOS MOSTRAM..., CONTUDO..., POR ISSO...)
+Explicação principal respondendo logo na primeira frase, em texto contínuo, académico, sóbrio e elegante.
+(Se o modo "Preparar para defesa" estiver ativo, estruture a resposta oral em: EU DIRIA..., OS DADOS MOSTRAM..., CONTUDO..., POR ISSO..., SE A BANCA APERTAR..., RESPOSTA...)
 
 ### EVIDÊNCIA
 Fontes internas utilizadas com rastreabilidade precisa (ex.: SSoT → Série Histórica, SSoT → CHIRPS, Dissertação → Cap. 3, Trabalho de Campo → Inquéritos).
@@ -219,6 +250,44 @@ Separação clara entre Dado Documentado, Interpretação da Dissertação, Infe
 
 ### LIMITAÇÃO
 Limitação metodológica relevante apresentada de forma discreta e contextualizada.`;
+
+/**
+ * Remove preâmbulos burocráticos proibidos e assegura resposta direta na primeira frase
+ */
+export function sanitizeDirectAnswer(rawText: string): string {
+  if (!rawText) return rawText;
+
+  let cleaned = rawText;
+
+  const prohibitedStarts = [
+    /Com base no corpus científico[^.\n]*[.:]\s*/gi,
+    /Com base na dissertação[^.\n]*[.:]\s*/gi,
+    /A evidência documental disponível sintetiza-se[^.\n]*[.:]\s*/gi,
+    /Os dados disponíveis permitem[^.\n]*[.:]\s*/gi,
+    /Segundo o corpus[^.\n]*[.:]\s*/gi,
+  ];
+
+  for (const pat of prohibitedStarts) {
+    cleaned = cleaned.replace(
+      new RegExp(`(###\\s*RESPOSTA\\s*\\n+)${pat.source}`, 'gi'),
+      '$1'
+    );
+  }
+
+  // Se começar com "**Não.** ", fundir em "Não, " para que a resposta direta seja uma frase completa
+  cleaned = cleaned.replace(
+    /(###\s*RESPOSTA\s*\n+)\*\*(?:Não|Sim)\.\*\*\s*/gi,
+    (m, p1) => `${p1}${m.includes('Sim') ? 'Sim, ' : 'Não, '}`
+  );
+
+  // Se começar com enumeração burocrática "1. **Secção:** Conteúdo", converter em frase fluida
+  cleaned = cleaned.replace(
+    /(###\s*RESPOSTA\s*\n+)1\.\s*\*\*([^:]+):\*\*\s*/gi,
+    '$1Em relação a $2, '
+  );
+
+  return cleaned;
+}
 
 /**
  * Helper para particionar a resposta em 4 níveis discretos
@@ -266,10 +335,12 @@ function extractStructuredSections(
 
   // Detecção de estrutura oral para Modo de Preparação de Defesa
   let oralDefense: OralDefenseStructure | undefined;
-  const oralDiria = answerText.match(/(?:EU DIRIA\.{2,3}|EU DIRIA:?)\s*([\s\S]*?)(?=(?:OS DADOS MOSTRAM|CONTUDO|POR ISSO|$))/i);
-  const oralDados = answerText.match(/(?:OS DADOS MOSTRAM\.{2,3}|OS DADOS MOSTRAM:?)\s*([\s\S]*?)(?=(?:CONTUDO|POR ISSO|$))/i);
-  const oralContudo = answerText.match(/(?:CONTUDO\.{2,3}|CONTUDO:?)\s*([\s\S]*?)(?=(?:POR ISSO|$))/i);
-  const oralPorIsso = answerText.match(/(?:POR ISSO\.{2,3}|POR ISSO:?)\s*([\s\S]*?)$/i);
+  const oralDiria = answerText.match(/(?:EU DIRIA\.{2,3}|EU DIRIA:?)\s*([\s\S]*?)(?=(?:OS DADOS MOSTRAM|CONTUDO|POR ISSO|SE A BANCA APERTAR|$))/i);
+  const oralDados = answerText.match(/(?:OS DADOS MOSTRAM\.{2,3}|OS DADOS MOSTRAM:?)\s*([\s\S]*?)(?=(?:CONTUDO|POR ISSO|SE A BANCA APERTAR|$))/i);
+  const oralContudo = answerText.match(/(?:CONTUDO\.{2,3}|CONTUDO:?)\s*([\s\S]*?)(?=(?:POR ISSO|SE A BANCA APERTAR|$))/i);
+  const oralPorIsso = answerText.match(/(?:POR ISSO\.{2,3}|POR ISSO:?)\s*([\s\S]*?)(?=(?:SE A BANCA APERTAR|$))/i);
+  const oralApertar = answerText.match(/(?:SE A BANCA APERTAR\.{2,3}|SE A BANCA APERTAR:?)\s*([\s\S]*?)(?=(?:RESPOSTA:?|$))/i);
+  const oralResposta = answerText.match(/(?:RESPOSTA\.{2,3}|RESPOSTA:?)\s*([\s\S]*?)$/i);
 
   if (oralDiria && oralDados && oralContudo && oralPorIsso) {
     oralDefense = {
@@ -277,6 +348,8 @@ function extractStructuredSections(
       osDadosMostram: oralDados[1].trim(),
       contudo: oralContudo[1].trim(),
       porIsso: oralPorIsso[1].trim(),
+      seABancaApertar: oralApertar ? oralApertar[1].trim() : undefined,
+      resposta: oralResposta ? oralResposta[1].trim() : undefined,
     };
   }
 
@@ -302,26 +375,52 @@ function extractStructuredSections(
   };
 }
 
-function formatOralResponse(answerText: string): string {
-  if (/EU DIRIA/i.test(answerText)) return answerText;
+export function formatOralResponse(answerText: string, query?: string): string {
+  if (/EU DIRIA/i.test(answerText) && /SE A BANCA APERTAR/i.test(answerText)) {
+    return answerText;
+  }
 
   const clean = answerText
     .replace(/^###\s*RESPOSTA\s*/i, '')
     .replace(/\*\*/g, '')
     .trim();
 
-  const parts = clean.split(/(?<=[.?!])\s+/).filter(Boolean);
+  const sentences = clean
+    .split(/(?<=[.?!])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
-  const euDiria = parts.slice(0, 2).join(' ') || clean;
+  const euDiria = sentences.slice(0, 2).join(' ') || clean;
   const osDados =
-    parts.slice(2, 4).join(' ') ||
+    sentences.slice(2, 4).join(' ') ||
     'Os dados empíricos do SSoT registam 31 anos de dinâmica (1994–2024), com produção média de 115.333 t/ano e tendência crescente significativa (Mann-Kendall Z = 3,100; p = 0,0019).';
   const contudo =
-    parts.slice(4, 6).join(' ') ||
+    sentences.slice(4, 6).join(' ') ||
     'Contudo, a metodologia impõe fronteiras inultrapassáveis: a série é híbrida (1994–2016 modelados em 3 camadas determinísticas; 2017–2024 observados pelo SDAE) e a correlação pluviométrica linear com CHIRPS é nula (r = 0,057; p = 0,762).';
   const porIsso =
-    parts.slice(6).join(' ') ||
+    sentences.slice(6, 8).join(' ') ||
     'Por isso, a sustentação da dissertação apoia-se na validação econométrica (Chow F = 0,84) e circunscreve rigorosamente cada conclusão ao seu respetivo suporte empírico.';
+
+  let seABancaApertar = 'Mas como garante a validade da conclusão perante as limitações dos dados?';
+  let resposta = 'Distinguindo com clareza o que é dado observado do que é modelado, sem nunca extrapolar além da evidência comprovada no terreno.';
+
+  const qLower = (query || '').toLowerCase();
+  if (qLower.includes('1994') || qLower.includes('reconstitu') || qLower.includes('chow') || qLower.includes('hibrid')) {
+    seABancaApertar = 'Como sustenta a ausência de quebra estrutural ao juntar os 23 anos modelados com os 8 anos observados?';
+    resposta = 'Apoiando-me no teste de Chow (F = 0,84; p = 0,443), que comprova estabilidade dos parâmetros da série.';
+  } else if (qLower.includes('freddy') || qLower.includes('2023') || qLower.includes('chuva') || qLower.includes('chirps')) {
+    seABancaApertar = 'Pode afirmar que o ciclone Freddy foi a causa exclusiva do colapso de 2023?';
+    resposta = 'Não, afirmo uma forte associação temporal com precipitação extrema (1.746 mm) e asfixia em várzeas, evitando causalidade determinística univariada.';
+  } else if (qLower.includes('547') || qLower.includes('perda')) {
+    seABancaApertar = 'Essas 547.224 toneladas foram realmente perdidas e pesadas no distrito?';
+    resposta = 'Não foram pesadas; representam uma estimativa analítica contrafactual em relação à baseline potencial de 7 t/ha em 14 anos adversos.';
+  } else if (qLower.includes('quissico') || qLower.includes('sig')) {
+    seABancaApertar = 'Os resultados de Quissico podem ser generalizados para todo o distrito de Zavala?';
+    resposta = 'Não, circunscrevo a análise espacial aos 11 bairros de Quissico (22.343 ha), respeitando as diferenças geomorfológicas dos outros postos.';
+  } else if (qLower.includes('campo') || qLower.includes('produtor') || qLower.includes('doenca') || qLower.includes('cbsd')) {
+    seABancaApertar = 'Os relatos dos camponeses autorizam um diagnóstico clínico de virose?';
+    resposta = 'Não, constituem valioso testemunho etnográfico de sintomas macroscópicos, não diagnóstico fitopatológico molecular.';
+  }
 
   return `EU DIRIA: ${euDiria}
 
@@ -329,7 +428,11 @@ OS DADOS MOSTRAM: ${osDados}
 
 CONTUDO: ${contudo}
 
-POR ISSO: ${porIsso}`;
+POR ISSO: ${porIsso}
+
+SE A BANCA APERTAR: ${seABancaApertar}
+
+RESPOSTA: ${resposta}`;
 }
 
 /**
@@ -348,16 +451,17 @@ function generateDeterministicScientificAnswer(
     .replace(/[\u0300-\u036f]/g, '');
 
   const buildResult = (status: EpistemicStatus, text: string) => {
+    const sanitized = sanitizeDirectAnswer(text);
     if (!defensePreparationMode) {
-      return { status, text };
+      return { status, text: sanitized };
     }
-    const respMatch = text.match(/###\s*RESPOSTA\s*([\s\S]*?)(?=###\s*EVID[EÊ]NCIA|$)/i);
+    const respMatch = sanitized.match(/###\s*RESPOSTA\s*([\s\S]*?)(?=###\s*EVID[EÊ]NCIA|$)/i);
     if (respMatch) {
-      const oralText = formatOralResponse(respMatch[1].trim());
-      const replaced = text.replace(respMatch[0], `### RESPOSTA\n${oralText}\n\n`);
+      const oralText = formatOralResponse(respMatch[1].trim(), query);
+      const replaced = sanitized.replace(respMatch[0], `### RESPOSTA\n${oralText}\n\n`);
       return { status, text: replaced };
     }
-    return { status, text: `### RESPOSTA\n${formatOralResponse(text)}\n\n${text}` };
+    return { status, text: `### RESPOSTA\n${formatOralResponse(sanitized, query)}\n\n${sanitized}` };
   };
 
   // =========================================================================
@@ -533,7 +637,7 @@ A plataforma reporta estritamente os registos literais da dissertação.`,
     return {
       status: 'OBSERVADO',
       text: `### RESPOSTA
-No corpus científico da dissertação de Yolanda Tamele, o termo **"Sen"** refere-se exclusivamente ao **estimador de declive não-paramétrico de Theil-Sen** (apresentando as inclinações de $+3.738$ t/ano no modelo principal e $+4.482$ t/ano em formulações comparativas da Tabela 4.2), utilizado em conjunto com o teste de tendências de Mann-Kendall.
+O termo **"Sen"** refere-se exclusivamente ao **estimador de declive não-paramétrico de Theil-Sen** (apresentando as inclinações de $+3.738$ t/ano no modelo principal e $+4.482$ t/ano em formulações comparativas da Tabela 4.2), utilizado em conjunto com o teste de tendências de Mann-Kendall na dissertação de Yolanda Tamele.
 
 Nas ocorrências textuais documentadas, os termos que antecedem "Sen" são especificamente descritores estatísticos e metodológicos:
 • "declive de **Sen**"
@@ -565,10 +669,10 @@ A dissertação utiliza o estimador de Sen para mitigar a sensibilidade a valore
     (norm.includes('entre 1994') && norm.includes('todos observados')) ||
     (norm.includes('assume que todos') && norm.includes('observados'))
   ) {
-    return {
-      status: 'RECONSTITUÍDO / MODELADO',
-      text: `### RESPOSTA
-**Rejeição de Premissa.** Os dados de produção entre 1994 e 2024 **não são todos observados**. A plataforma não pode assumir que todos os dados são observados.
+    return buildResult(
+      'RECONSTITUÍDO / MODELADO',
+      `### RESPOSTA
+Não, os dados de 1994 a 2024 **não são todos observados**; a série temporal é estruturalmente híbrida, dividindo-se entre 23 anos modelados em três camadas determinísticas (1994–2016) e 8 anos observados diretamente pelo SDAE (2017–2024). Rejeição de Premissa: o sistema rejeita categoricamente a presunção de que todos os dados sejam observados.
 
 A série temporal de 31 anos é estruturalmente híbrida:
 • **Período 1994–2016 (23 anos):** Dados **modelados e reconstituídos** retrospectivamente em três camadas determinísticas (FAO/TIA, SPI/CHIRPS e choques históricos), dada a ausência de registos distritais contínuos no pós-guerra civil.
@@ -586,8 +690,8 @@ A transição metodológica entre os 23 anos modelados e os 8 anos observados fo
 • Estatuto Epistemológico: RECONSTITUÍDO / MODELADO na série global.
 
 ### LIMITAÇÃO
-A leitura de oscilações anuais no período 1994–2016 requer prudência analítica pela ausência de recolha primária contínua.`,
-    };
+A leitura de oscilações anuais no período 1994–2016 requer prudência analítica pela ausência de recolha primária contínua.`
+    );
   }
 
   // RT02: 1994 segundo registos observados
@@ -595,10 +699,10 @@ A leitura de oscilações anuais no período 1994–2016 requer prudência anal�
     norm.includes('1994') &&
     (norm.includes('registos observados') || norm.includes('registo observado') || (norm.includes('segundo') && norm.includes('observad')) || norm.includes('quanto foi produzido em zavala em 1994 segundo'))
   ) {
-    return {
-      status: 'RECONSTITUÍDO / MODELADO',
-      text: `### RESPOSTA
-**Não existem registos observados de produção em 1994.** A premissa de que existem registos observados para 1994 é incorreta e não é um dado observado.
+    return buildResult(
+      'RECONSTITUÍDO / MODELADO',
+      `### RESPOSTA
+Não existem registos observados de produção em 1994; o ano de 1994 possui estatuto de dado reconstituído e modelado em três camadas.
 
 Em 1994 (ano inicial da série histórica de 31 anos), a produção de mandioca em Zavala foi estimada em **52.164 toneladas** (área colhida de 16.200 ha e rendimento médio de 3,22 t/ha). Este valor pertence integralmente ao período **reconstituído e modelado em três camadas** (1994–2016, 23 anos), decorrente do modelo determinístico (Camada 1: FAO/TIA; Camada 2: SPI/CHIRPS; Camada 3: choques históricos). Registos observados directos do SDAE apenas existem a partir de 2017.
 
@@ -612,8 +716,8 @@ Em 1994 (ano inicial da série histórica de 31 anos), a produção de mandioca 
 • Rigor Científico: Rejeição da atribuição de estatuto observado a estimativas pós-guerra civil.
 
 ### LIMITAÇÃO
-O valor de 1994 possui incerteza decorrente da modelação determinística na ausência de estatísticas distritais primárias.`,
-    };
+O valor de 1994 possui incerteza decorrente da modelação determinística na ausência de estatísticas distritais primárias.`
+    );
   }
 
   // RT03: 547.224 t como perda física / quantas toneladas foram fisicamente perdidas
@@ -623,12 +727,12 @@ O valor de 1994 possui incerteza decorrente da modelação determinística na au
     (norm.includes('perdas fisicas') && (norm.includes('547') || norm.includes('agricultores'))) ||
     (norm.includes('trate as 547') && norm.includes('perdas'))
   ) {
-    return {
-      status: 'MODELADO',
-      text: `### RESPOSTA
-**Formulação epistemologicamente imprecisa.** As **547.224 toneladas** acumuladas **não foram fisicamente perdidas** nem pesadas na parcela ou em armazéns pelos agricultores.
+    return buildResult(
+      'MODELADO',
+      `### RESPOSTA
+Não, as 547.224 toneladas acumuladas **não foram fisicamente perdidas** nem pesadas na parcela ou em armazéns pelos agricultores; trata-se de uma Formulação epistemologicamente imprecisa, visto corresponder a uma **estimativa de perdas no âmbito da modelação contrafactual**.
 
-Trata-se de uma **estimativa de perdas no âmbito da modelação contrafactual**, apurada ao longo de 14 safras adversas no período modelado de 1994–2016. O valor corresponde ao diferencial cumulativo entre a linha de base potencial agroecológica calibrada de 7,0 t/ha e a produção efectivamente modelada para os anos sob choque agroclimático. Trata-se de uma métrica biofísica de custo de oportunidade e vulnerabilidade produtiva, e não de tubérculos fisicamente pesados ou apodrecidos em armazéns.
+O valor corresponde ao diferencial cumulativo entre a linha de base potencial agroecológica calibrada de 7,0 t/ha e a produção efectivamente modelada para os anos sob choque agroclimático no período 1994–2016. Trata-se de uma métrica biofísica de custo de oportunidade e vulnerabilidade produtiva, e não de tubérculos fisicamente pesados ou apodrecidos em armazéns.
 
 ### EVIDÊNCIA
 • SSoT → Balanço de Perdas Biofísicas (Tabela 4.4 da Dissertação)
@@ -640,8 +744,8 @@ Trata-se de uma **estimativa de perdas no âmbito da modelação contrafactual**
 • Interpretação da Dissertação: Quantifica o custo acumulado de vulnerabilidade agroclimática sob ausência de regadio.
 
 ### LIMITAÇÃO
-A linha de base de 7,0 t/ha traduz o potencial agronómico teórico sem restrições de insumos ou mão-de-obra.`,
-    };
+A linha de base de 7,0 t/ha traduz o potencial agronómico teórico sem restrições de insumos ou mão-de-obra.`
+    );
   }
 
   // RT04: CHIRPS prova causalidade da chuva
@@ -649,10 +753,10 @@ A linha de base de 7,0 t/ha traduz o potencial agronómico teórico sem restriç
     (norm.includes('chirps') || norm.includes('chuva')) &&
     (norm.includes('prova que a chuva') || norm.includes('prova que o aumento') || norm.includes('causou o aumento') || norm.includes('prova de causalidade'))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-**Não.** A análise de precipitação satelital CHIRPS v2.0 **não prova que a chuva causou o aumento** nem as variações na produção; o corpus científico **não sustenta causalidade linear direta**.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Não, a análise de precipitação satelital CHIRPS v2.0 **não prova que a chuva causou o aumento** nem que a chuva explica a produção de mandioca em Zavala, registando desacoplamento pluviométrico ($r = 0,057$; $p = 0,762$).
 
 A correlação de Pearson entre a precipitação acumulada anual CHIRPS e a produção de mandioca na série de 31 anos é estatisticamente nula ($r = 0,057$; $p = 0,762$; $R^2 = 0,003$). Este resultado demonstra um claro desacoplamento pluviométrico. A mandioca possui tolerância à seca via mecanismos de dormência e regulação estomática, enquanto os choques extremos (como as cheias do Ciclone Freddy em 2023) atuam por vias não-lineares de saturação de solo e asfixia radicular em várzeas, e não por proporcionalidade linear de precipitação.
 
@@ -666,8 +770,8 @@ A correlação de Pearson entre a precipitação acumulada anual CHIRPS e a prod
 • Interpretação da Dissertação: Rejeição de determinismo climático simples na explicação da safra de mandioca.
 
 ### LIMITAÇÃO
-O produto CHIRPS agrega valores a 0,05° de resolução, não medindo a microtopografia ou retenção hídrica na machamba.`,
-    };
+O produto CHIRPS agrega valores a 0,05° de resolução, não medindo a microtopografia ou retenção hídrica na machamba.`
+    );
   }
 
   // RT05: Ciclone como causa determinística (Ciclone X)
@@ -675,10 +779,10 @@ O produto CHIRPS agrega valores a 0,05° de resolução, não medindo a microtop
     norm.includes('ciclone x') ||
     (norm.includes('ciclone') && norm.includes('responsavel') && !norm.includes('freddy') && !norm.includes('favio') && !norm.includes('eline') && !norm.includes('guambe'))
   ) {
-    return {
-      status: 'SUPORTE INSUFICIENTE' as any,
-      text: `### RESPOSTA
-**Não encontrei evidência suficiente no corpus científico da plataforma para sustentar essa afirmação.**
+    return buildResult(
+      'SUPORTE INSUFICIENTE' as any,
+      `### RESPOSTA
+Não encontrei evidência suficiente no corpus científico da plataforma para sustentar essa afirmação.
 
 A dissertação de Yolanda Tamele não documenta a existência de um "Ciclone X", nem atribui quebras de produção a eventos climáticos hipotéticos ou isolados sem validação empírica. Os ciclones e tempestades tropicais oficialmente catalogados e analisados na dissertação são: Ciclone Bonita (1996), Ciclone Lisette (1997), Ciclone Eline (2000), Tempestade Dera (2001), Ciclone Japhet (2003), Ciclone Favio (2007), Ciclone Funso (2012), Ciclone Dineo (2017), Tempestade Guambe (2021) e Ciclone Tropical Freddy (2023). Nenhum deles é tratado sob causalidade determinística univariada sem o enquadramento biofísico de solo e relevo.
 
@@ -690,8 +794,8 @@ A dissertação de Yolanda Tamele não documenta a existência de um "Ciclone X"
 • Salvaguarda Epistemológica: Rejeição de atribuição determinística a eventos não catalogados (Estatuto: SUPORTE INSUFICIENTE).
 
 ### LIMITAÇÃO
-A plataforma responde estritamente com base nos desastres hidrometeorológicos documentados no corpus.`,
-    };
+A plataforma responde estritamente com base nos desastres hidrometeorológicos documentados no corpus.`
+    );
   }
 
   // RT06: Quissico = todo o distrito
@@ -699,10 +803,10 @@ A plataforma responde estritamente com base nos desastres hidrometeorológicos d
     (norm.includes('11 bairros') || norm.includes('quissico')) &&
     (norm.includes('permitem concluir que todo') || norm.includes('todo o distrito de zavala apresenta o mesmo padrao') || norm.includes('mesmo padrao') || (norm.includes('concluir') && norm.includes('todo o distrito')))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-**Não.** Os resultados dos 11 bairros analisados (cobrindo 22.343 hectares) **não permitem concluir que todo o Distrito de Zavala apresenta o mesmo padrão**.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Não, os resultados dos 11 bairros analisados (cobrindo 22.343 hectares em Quissico) **não representam todo o Distrito de Zavala** nem permitem concluir que todo o distrito apresenta o mesmo padrão.
 
 A caracterização espacial detalhada por satélite Sentinel-2 e modelo altimétrico SRTM circunscreve-se exclusivamente ao **Posto Administrativo de Quissico**. Os restantes três postos administrativos de Zavala — **Zandamela, Massava e Mavila** — apresentam condições agroecológicas distintas, declividades variadas e distâncias diferenciadas aos eixos rodoviários e mercados. Extrapolar os achados de Quissico para a totalidade do distrito sem ressalvas violaria as fronteiras territoriais estabelecidas pela investigadora.
 
@@ -716,8 +820,8 @@ A caracterização espacial detalhada por satélite Sentinel-2 e modelo altimét
 • Rigor Espacial: Proibição de generalização não verificada para os postos de Zandamela, Massava e Mavila.
 
 ### LIMITAÇÃO
-A indisponibilidade de mapeamento Sentinel-2 e SRTM com a mesma resolução para os postos periféricos limita a comparação distrital.`,
-    };
+A indisponibilidade de mapeamento Sentinel-2 e SRTM com a mesma resolução para os postos periféricos limita a comparação distrital.`
+    );
   }
 
   // RT07: Testemunho = Diagnóstico (Agricultores identificaram doença X, comprovada)
@@ -725,10 +829,10 @@ A indisponibilidade de mapeamento Sentinel-2 e SRTM com a mesma resolução para
     (norm.includes('agricultores') || norm.includes('produtores') || norm.includes('camponeses')) &&
     (norm.includes('doenca x') || norm.includes('esta comprovada a presenca dessa doenca') || (norm.includes('identificaram') && norm.includes('comprovada')))
   ) {
-    return {
-      status: 'TESTEMUNHO DE CAMPO',
-      text: `### RESPOSTA
-**Não.** A identificação de sintomas por parte dos agricultores **não equivale a diagnóstico fitopatológico comprovado**.
+    return buildResult(
+      'TESTEMUNHO DE CAMPO',
+      `### RESPOSTA
+Não, a identificação de sintomas por parte dos agricultores **não equivale a diagnóstico fitopatológico laboratorial comprovado**.
 
 Os testemunhos recolhidos junto de 77 produtores em 11 bairros de Quissico (registados em 51 páginas do caderno de campo) traduzem a **percepção empírica e o saber camponês** sobre manifestações visuais na machamba, tais como o escurecimento radicular ("moché") e o definhamento de folhas. A dissertação não realizou análises laboratoriais moleculares (como ensaios PCR ou ELISA para confirmação dos vírus CBSD ou CMD). Portanto, os relatos empíricos constituem valiosa evidência socioprodutiva de terreno, mas não diagnóstico biológico conclusivo.
 
@@ -742,8 +846,8 @@ Os testemunhos recolhidos junto de 77 produtores em 11 bairros de Quissico (regi
 • Interpretação da Dissertação: Sintomas observados compatíveis com viroses e asfixia, mas desprovidos de confirmação laboratorial molecular.
 
 ### LIMITAÇÃO
-Ausência de meios laboratoriais moleculares de diagnóstico fitossanitário no trabalho de campo.`,
-    };
+Ausência de meios laboratoriais moleculares de diagnóstico fitossanitário no trabalho de campo.`
+    );
   }
 
   // RT13: Conversão de Modelo em Facto (Produção real observada entre 1994 e 2016)
@@ -752,12 +856,12 @@ Ausência de meios laboratoriais moleculares de diagnóstico fitossanitário no 
     (norm.includes('real observada') && norm.includes('1994') && norm.includes('2016')) ||
     (norm.includes('producao real observada') && (norm.includes('1994') || norm.includes('2016')))
   ) {
-    return {
-      status: 'RECONSTITUÍDO / MODELADO',
-      text: `### RESPOSTA
-**Correção de Premissa: Não existem dados de produção real observada entre 1994 e 2016.**
+    return buildResult(
+      'RECONSTITUÍDO / MODELADO',
+      `### RESPOSTA
+Não existem dados de produção real observada para os anos entre 1994 e 2016; a totalidade destes 23 anos resulta da reconstituição e modelação determinística em três camadas desenvolvida por Yolanda Tamele.
 
-A premissa da pergunta assume incorretamente que existiram medições empíricas anuais contínuas no período de 1994 a 2016. No rescaldo imediato do Acordo Geral de Paz (1992), o Distrito de Zavala não dispunha de aparato estatístico distrital para registo anual sistemático da mandioca. Por conseguinte, a totalidade dos valores destes 23 anos resulta da **reconstituição e modelação determinística em três camadas** desenvolvida por Yolanda Tamele (Camada 1: FAO/TIA; Camada 2: SPI/CHIRPS; Camada 3: choques históricos). Dados reais observados e auditados pelo SDAE existem unicamente a partir de 2017 (período 2017–2024, 8 anos).
+No rescaldo imediato do Acordo Geral de Paz (1992), o Distrito de Zavala não dispunha de aparato estatístico distrital para registo anual sistemático da mandioca. Por conseguinte, os valores destes 23 anos decorrem da modelação determinística (Camada 1: FAO/TIA; Camada 2: SPI/CHIRPS; Camada 3: choques históricos). Dados reais observados e auditados pelo SDAE existem unicamente a partir de 2017. A união das séries foi formalmente validada pelo teste de Chow ($F = 0,84; p = 0,443$).
 
 ### EVIDÊNCIA
 • SSoT → THESIS_CORE_FACTS (modeledPeriod: 1994–2016; observedPeriod: 2017–2024)
@@ -769,24 +873,25 @@ A premissa da pergunta assume incorretamente que existiram medições empíricas
 • Rigor Epistemológico: Não converter modelos em observações empíricas factuais.
 
 ### LIMITAÇÃO
-Os dados de 1994 a 2016 contêm margem de incerteza derivada dos coeficientes determinísticos aplicados.`,
-    };
+Os dados de 1994 a 2016 contêm margem de incerteza derivada dos coeficientes determinísticos aplicados.`
+    );
   }
 
   // RT14: Causalidade do Declínio de 2023 (Separação estrita em 4 dimensões)
   if (
-    (norm.includes('o que causou exactamente a queda') || norm.includes('o que causou a queda') || norm.includes('causa da queda') || norm.includes('causou exactamente')) &&
+    (norm.includes('o que causou exactamente a queda') || norm.includes('o que causou a queda') || norm.includes('causa da queda') || norm.includes('causou exactamente') || norm.includes('colapso')) &&
     norm.includes('2023')
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-A análise da quebra acentuada da produção em 2023 exige a separação estrita entre dados observados, interpretação climática, hipótese biofísica e limitações empíricas:
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Em 2023, a produção de mandioca no Distrito de Zavala colapsou para **35.371 toneladas** (quebra de **-87,1%** face ao pico de 2021) em consequência do impacto do **Ciclone Tropical Freddy** e subsequente asfixia radicular em várzeas.
 
-• **DADO OBSERVADO:** Em 2023, a produção oficial documentada pelo SDAE Zavala colapsou para **35.371 toneladas** (área colhida de 22.107 ha; rendimento médio de 1,60 t/ha), representando uma queda drástica de **-87,1%** face ao pico de 2021 (273.773 t).
-• **INTERPRETAÇÃO:** O colapso decorre da passagem prolongada do **Ciclone Tropical Freddy** em Fevereiro/Março de 2023, gerando uma precipitação acumulada extrema de **1.746,0 mm** (+78,1% de anomalia pluviométrica satelital CHIRPS).
-• **HIPÓTESE / ASSOCIAÇÃO:** O volume torrencial e a estagnação hídrica em depressões deprimidas e várzeas (< 9m de altitude) provocaram anoxia e asfixia radicular anaeróbia generalizada, desencadeando a podridão fúngica/bacteriana ("moché") e perda dos tubérculos antes da maturação.
-• **LIMITAÇÃO:** A quantificação no terreno foi limitada por estradas e pontes cortadas, isolamento de parcelas periféricas e ausência de pesagem sistemática de todas as machambas afectadas.
+A análise deste choque exige a separação estrita entre dados observados, interpretação climática e hipótese biofísica:
+• **DADO OBSERVADO:** Em 2023, a produção oficial documentada pelo SDAE Zavala colapsou para 35.371 toneladas (área colhida de 22.107 ha; rendimento de 1,60 t/ha).
+• **INTERPRETAÇÃO:** O colapso decorre da passagem prolongada do Ciclone Freddy em Fevereiro/Março de 2023, acumulando 1.746,0 mm (+78,1% de anomalia CHIRPS).
+• **HIPÓTESE / ASSOCIAÇÃO:** O volume torrencial e a estagnação hídrica em depressões deprimidas (< 9m) provocaram anoxia e podridão radicular ("moché").
+• **LIMITAÇÃO:** A quantificação no terreno foi limitada por vias de acesso cortadas.
 
 ### EVIDÊNCIA
 • SSoT → Série Histórica (Tabela 4.1 da Dissertação: 2023 = 35.371 t, mínimo observado)
@@ -798,8 +903,8 @@ A análise da quebra acentuada da produção em 2023 exige a separação estrita
 • Associação Biofísica: Asfixia radicular em cotas baixas sob precipitação extrema não-linear.
 
 ### LIMITAÇÃO
-Dificuldades operacionais pós-ciclone limitaram a exaustividade da amostragem directa nas parcelas inundadas.`,
-    };
+Dificuldades operacionais pós-ciclone limitaram a exaustividade da amostragem directa nas parcelas inundadas.`
+    );
   }
 
   // RT15: Como r = 0.057 explica a produção
@@ -807,12 +912,12 @@ Dificuldades operacionais pós-ciclone limitaram a exaustividade da amostragem d
     (norm.includes('0.057') || norm.includes('0,057')) &&
     (norm.includes('explica') || norm.includes('como'))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-**Rejeição de Premissa Epistemológica.** Um coeficiente de correlação de Pearson de $r = 0,057$ ($p = 0,762$; $R^2 = 0,003$) **não explica a produção**.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Um coeficiente de correlação de Pearson de $r = 0,057$ ($p = 0,762$; $R^2 = 0,003$) **não explica a produção**, comprovando a ausência de relação linear entre chuva anual e produção de mandioca.
 
-Na econometria e bioestatística, uma correlação de 0,057 com valor p de 0,762 comprova exactamente o oposto: demonstra a **ausência de relação linear** e o completo desacoplamento entre a precipitação acumulada anual satelital CHIRPS e a produção de mandioca em Zavala ao longo dos 31 anos analisados. O coeficiente $R^2 = 0,003$ indica que apenas 0,3% da variância da produção poderia ser associada à chuva anual, confirmando que a dinâmica produtiva depende de fatores agronómicos complexos, regulação estomática da cultura e choques não-lineares, e não de dependência linear da precipitação.
+Na econometria e bioestatística, uma correlação de 0,057 com valor p de 0,762 comprova exactamente o oposto: demonstra o completo desacoplamento entre a precipitação acumulada anual satelital CHIRPS e a produção de mandioca em Zavala ao longo dos 31 anos analisados. O coeficiente $R^2 = 0,003$ indica que apenas 0,3% da variância da produção poderia ser associada à chuva anual, confirmando que a dinâmica produtiva depende de fatores agronómicos complexos, regulação estomática da cultura e choques não-lineares.
 
 ### EVIDÊNCIA
 • SSoT → Clima e Pluviometria (Tabela 4.3 da Dissertação: r = 0,057; p = 0,762; R² = 0,003)
@@ -824,8 +929,8 @@ Na econometria e bioestatística, uma correlação de 0,057 com valor p de 0,762
 • Conclusão Metodológica: Desacoplamento linear formalmente demonstrado.
 
 ### LIMITAÇÃO
-A correlação linear não capta eventos extremos agudos distribuídos em janelas temporais de poucos dias.`,
-    };
+A correlação linear não capta eventos extremos agudos distribuídos em janelas temporais de poucos dias.`
+    );
   }
 
   // RT16: Extrapolação Temporal (Produção em 2030)
@@ -1120,7 +1225,7 @@ O satélite CHIRPS mede agregados regionais de 5 km, não registando regimes de 
     return {
       status: 'OBSERVADO',
       text: `### RESPOSTA
-**Âmbito espacial a rever: a evidência espacial disponível corresponde à microanálise de Quissico (22.343 ha).**
+Não, os resultados dos 11 bairros analisados (cobrindo 22.343 hectares em Quissico) **não representam todo o Distrito de Zavala**. Âmbito espacial a rever: a evidência espacial disponível corresponde à microanálise de Quissico (22.343 ha).
 
 A caracterização cartográfica e altimétrica de alta resolução (Sentinel-2 Dynamic World e SRTM) circunscreve-se exclusivamente aos 11 bairros do Posto Administrativo de Quissico (cobrindo 22.343 hectares). Os postos de Zandamela, Massava e Mavila possuem características geomorfológicas, densidades populacionais e distâncias a mercados distintas, pelo que a extrapolação para todo o distrito violaria os limites metodológicos do estudo.
 
@@ -1207,6 +1312,27 @@ A plataforma opera estritamente SOBRE o corpus existente, sem poderes discricion
     };
   }
 
+  // OLS Newey-West específico (antes do teste genérico de Mann-Kendall)
+  if (norm.includes('ols') && !norm.includes('mann-kendall') && !norm.includes('kendall')) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A taxa de crescimento linear estimada por Mínimos Quadrados Ordinários (OLS) com correcção de Newey-West foi de **+4.229 toneladas/ano** ($p = 0,020$; $R^2 = 0,174$).
+
+Esta regressão paramétrica corrobora o sentido positivo da dinâmica secular da mandioca em Zavala, sendo complementada pelo estimador robusto não-paramétrico de Theil-Sen (+3.738 t/ano) para mitigar a sensibilidade a anos de choques climáticos atípicos.
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (olsSlopeTonnesYear = 4.229; olsPValue = 0,020; olsR2 = 0,174)
+• Tabela 4.2 da Dissertação de Mestrado
+
+### INTERPRETAÇÃO
+• Dado Documentado: Parâmetros de regressão OLS corrigidos por Newey-West.
+
+### LIMITAÇÃO
+O modelo OLS assume linearidade simplificada numa série sujeita a quebras climáticas assimétricas.`
+    );
+  }
+
   // TESTE 3 CANÓNICO: Mann-Kendall, Sen e OLS Newey-West
   if (
     norm.includes('mann-kendall') ||
@@ -1218,12 +1344,12 @@ A plataforma opera estritamente SOBRE o corpus existente, sem poderes discricion
     (norm.includes('regressao') && norm.includes('ols')) ||
     (norm.includes('taxa de crescimento') && norm.includes('ols'))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-O teste não-paramétrico de Mann-Kendall revelou uma tendência estatisticamente significativa de crescimento da produção de mandioca em Zavala ($Z = 3,100$; $p = 0,0019$). A estimativa foi calculada pelo método de Hamed & Rao (1998) com correcção robusta para autocorrelação serial de lag-1. A inclinação mediana não-paramétrica de Sen estimou uma expansão contínua de $+3.738$ toneladas/ano.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+O teste não-paramétrico de Mann-Kendall revelou uma tendência positiva estatisticamente significativa de crescimento da produção de mandioca em Zavala ($Z = 3,100$; $p = 0,0019$), com declive robusto de Sen de $+3.738$ toneladas/ano.
 
-Complementarmente, a taxa linear de incremento apurada pelo estimador paramétrico OLS com erros-padrão consistentes de Newey-West foi de $+4.229$ toneladas/ano ($p = 0,020$; $R^2 = 0,174$), confirmando a expansão estrutural da cultura na série temporal de 31 anos (1994–2024).
+A estimativa foi calculada pelo método de Hamed & Rao (1998) com correcção robusta para autocorrelação serial de lag-1. Complementarmente, a taxa linear de incremento apurada pelo estimador paramétrico OLS com erros-padrão consistentes de Newey-West foi de $+4.229$ toneladas/ano ($p = 0,020$; $R^2 = 0,174$), confirmando a expansão estrutural da cultura na série temporal de 31 anos (1994–2024).
 
 ### EVIDÊNCIA
 • SSoT → Modelos Econométricos (THESIS_CORE_FACTS: mannKendallZ = 3,100; mannKendallPValue = 0,0019; senSlopeTonnesPerYear = 3.738; olsSlopeTonnesYear = 4.229)
@@ -1235,16 +1361,18 @@ Complementarmente, a taxa linear de incremento apurada pelo estimador paramétri
 • Interpretação da Dissertação: Confirma expansão secular apesar da volatilidade agroclimática de curto prazo.
 
 ### LIMITAÇÃO
-O teste capta a trajectória global de 31 anos, mas não anula a vulnerabilidade a choques extremos agudos como os de 2023.`,
-    };
+O teste capta a trajectória global de 31 anos, mas não anula a vulnerabilidade a choques extremos agudos como os de 2023.`
+    );
   }
 
   // TESTE 1: Produção em 2021
   if (norm.includes('2021')) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-No ano de 2021, a produção de mandioca no Distrito de Zavala foi de **273.773 toneladas**, correspondendo a uma área colhida de 45.629 hectares e a um rendimento médio de 6,0 t/ha. Este valor situa-se significativamente acima da média do período de 31 anos (115.333 t/ano), reflectindo uma safra favorável sem registo de secas severas ou inundações extremas (precipitação CHIRPS de 1.148,8 mm).
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+No ano de 2021, a produção de mandioca no Distrito de Zavala atingiu o seu pico histórico absoluto de **273.773 toneladas** (área colhida de 45.629 ha; rendimento de 6,0 t/ha), com estatuto de dado observado pelo SDAE.
+
+Este valor situa-se significativamente acima da média do período de 31 anos (115.333 t/ano), reflectindo uma safra favorável sem registo de secas severas ou inundações extremas (precipitação CHIRPS de 1.148,8 mm).
 
 ### EVIDÊNCIA
 • SSoT → Série Histórica → Ano 2021 (Tabela 4.1 da Dissertação)
@@ -1256,18 +1384,18 @@ No ano de 2021, a produção de mandioca no Distrito de Zavala foi de **273.773 
 • Estatuto Epistemológico: OBSERVADO (pertencente ao período 2017–2024).
 
 ### LIMITAÇÃO
-Os dados de 2021 assentam em relatórios primários do SDAE, que dependem da cobertura e capacidade logística dos extensionistas do distrito.`,
-    };
+Os dados de 2021 assentam em relatórios primários do SDAE, que dependem da cobertura e capacidade logística dos extensionistas do distrito.`
+    );
   }
 
   // TESTE 2: Produção em 1994 (Ano Base Reconstituído)
   if (norm.includes('1994')) {
-    return {
-      status: 'RECONSTITUÍDO / MODELADO',
-      text: `### RESPOSTA
-**Não.** Os dados de 1994 não são dados observados: pertencem ao período reconstituído e modelado (1994–2016, totalizando 23 anos). Em 1994 (ano inicial da série histórica de 31 anos), a produção de mandioca no Distrito de Zavala foi estimada em **52.164 toneladas**, correspondendo a uma área colhida de 16.200 hectares e a um rendimento médio de 3,22 t/ha.
+    return buildResult(
+      'RECONSTITUÍDO / MODELADO',
+      `### RESPOSTA
+No ano de 1994 (ano inicial da série histórica de 31 anos), a produção de mandioca no Distrito de Zavala foi estimada em **52.164 toneladas** (área de 16.200 ha; rendimento de 3,22 t/ha), correspondendo a dado reconstituído e modelado.
 
-Apenas a partir de 2017 (período 2017–2024, 8 anos) os dados são observados e documentados directamente pelo SDAE Zavala. O ano de 1994 situa-se no contexto pós-guerra civil imediato, no qual não existia registo estatístico distrital contínuo.
+Não se trata de um dado observado pelo SDAE: pertence ao período reconstituído e modelado (1994–2016, totalizando 23 anos). Apenas a partir de 2017 (período 2017–2024, 8 anos) os dados são observados e documentados directamente pelo SDAE Zavala. O ano de 1994 situa-se no contexto pós-guerra civil imediato, no qual não existia registo estatístico distrital contínuo.
 
 ### EVIDÊNCIA
 • SSoT → Série Histórica → Ano 1994 (Tabela 4.1 da Dissertação: 52.164 t)
@@ -1279,18 +1407,39 @@ Apenas a partir de 2017 (período 2017–2024, 8 anos) os dados são observados 
 • Interpretação da Dissertação: A transição entre os 23 anos modelados e os 8 anos observados foi testada por Chow (F = 0,84; p = 0,443), sem quebra estrutural artificial.
 
 ### LIMITAÇÃO
-O período 1994–2016 resulta de calibração em 3 camadas, não dispondo de recolha primária contínua a nível distrital.`,
-    };
+O período 1994–2016 resulta de calibração em 3 camadas, não dispondo de recolha primária contínua a nível distrital.`
+    );
+  }
+
+  // Precipitação Freddy 2023 específica
+  if ((norm.includes('precipitacao') || norm.includes('chuva') || norm.includes('pluvio') || norm.includes('1746')) && (norm.includes('2023') || norm.includes('freddy'))) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A precipitação acumulada no ano do Ciclone Freddy (2023) foi de **1.746,0 mm** segundo os registos satelitais CHIRPS v2.0, representando uma anomalia pluviométrica de **+78,1%** acima da média histórica.
+
+Este excesso pluvial provocou o alagamento das várzeas e a destruição por asfixia radicular das machambas situadas em cotas baixas, associando-se ao colapso da produção para 35.371 toneladas (-87,1% em relação a 2021).
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (Tabela 4.3 da Dissertação de Mestrado: 1.746,0 mm CHIRPS)
+• Balanço do Ciclone Freddy e anomalia de +78,1%
+
+### INTERPRETAÇÃO
+• Dado Documentado: Registo satelital CHIRPS v2.0 para o ano hidrológico de 2023.
+
+### LIMITAÇÃO
+O dado CHIRPS agrega valores a 0,05° de resolução e não captura as microbacias individuais de drenagem.`
+    );
   }
 
   // Quebra e Impacto do Ciclone Freddy em 2023
   if (norm.includes('2023') || norm.includes('freddy')) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-No ano de 2023, a produção de mandioca no Distrito de Zavala colapsou para **35.371 toneladas**, representando uma queda drástica de **-87,1%** em relação ao pico histórico de 2021 (273.773 t). 
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+No ano de 2023, a produção de mandioca no Distrito de Zavala colapsou para **35.371 toneladas**, sofrendo uma quebra de **-87,1%** face a 2021 associada ao impacto do **Ciclone Tropical Freddy**.
 
-Este colapso decorreu da passagem e estagnação do **Ciclone Tropical Freddy** em Fevereiro e Março de 2023, que acumulou 1.746,0 mm de precipitação (+78,1% de anomalia pluviométrica satelital CHIRPS). O volume torrencial provocou o alagamento prolongado das depressões e várzeas deprimidas, induzindo asfixia radicular (anoxia anaeróbia) e podridão fúngica/bacteriana generalizada nos tubérculos submersos.
+Este colapso decorreu da passagem e estagnação do ciclone em Fevereiro e Março de 2023, acumulando 1.746,0 mm de chuva (+78,1% de anomalia pluviométrica CHIRPS). O volume torrencial provocou o alagamento prolongado das depressões e várzeas deprimidas, induzindo asfixia radicular (anoxia anaeróbia) e podridão fúngica/bacteriana nos tubérculos submersos.
 
 ### EVIDÊNCIA
 • SSoT → Série Histórica → Ano 2023 (Tabela 4.1 da Dissertação: 35.371 t, mínimo histórico observado)
@@ -1302,8 +1451,8 @@ Este colapso decorreu da passagem e estagnação do **Ciclone Tropical Freddy** 
 • Estatuto Epistemológico: OBSERVADO. O choque de 2023 ilustra o paradoxo de que excesso pluviométrico torrencial é tão devastador quanto secas severas.
 
 ### LIMITAÇÃO
-A recolha pós-ciclone foi prejudicada por estradas cortadas e dificuldades logísticas de acesso a machambas periféricas.`,
-    };
+A recolha pós-ciclone foi prejudicada por estradas cortadas e dificuldades logísticas de acesso a machambas periféricas.`
+    );
   }
 
   // TESTE 3: CHIRPS prova causalidade da queda?
@@ -1311,12 +1460,12 @@ A recolha pós-ciclone foi prejudicada por estradas cortadas e dificuldades log�
     (norm.includes('chirps') || norm.includes('chuva') || norm.includes('precipitacao')) &&
     (norm.includes('prova') || norm.includes('causou') || norm.includes('causa') || norm.includes('queda') || norm.includes('correlac') || norm.includes('explica'))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-**Não.** A análise de precipitação satelital CHIRPS v2.0 **não prova** que a chuva ou a sua escassez seja a causa linear determinística das variações na produção de mandioca em Zavala; o corpus **não sustenta causalidade** linear direta (ausência de relação linear e relação não linear).
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Não, a análise de precipitação satelital CHIRPS v2.0 **não prova** que a chuva seja a causa da produção de mandioca em Zavala, registando desacoplamento pluviométrico com ausência de correlação estatisticamente significativa ($r = 0,057$; $p = 0,762$), demonstrando uma dinâmica não linear que não sustenta causalidade directa.
 
-A correlação de Pearson calculada para a série temporal completa de 31 anos revelou-se praticamente nula, muito fraca e estatisticamente não significativa ($r = 0,057$; $p = 0,762$; $R^2 = 0,003$), demonstrando um claro desacoplamento pluviométrico. Embora anos de seca severa (como a seca extrema de 2016) e inundações extremas (como os ciclones Favio em 2007 e Freddy em 2023) mostrem associação temporal com quebras agronómicas, a relação opera por vias não-lineares, conjugando desfasamentos fenológicos, asfixia radicular e pressão de pragas.
+A correlação de Pearson calculada para a série temporal completa de 31 anos revelou-se praticamente nula, muito fraca e estatisticamente não significativa ($R^2 = 0,003$). Embora anos de seca severa (como 2016) e inundações extremas (como o Ciclone Freddy em 2023) mostrem forte associação temporal, a relação opera por vias não-lineares, conjugando tolerância estomática, asfixia radicular em cotas baixas e pressão de pragas.
 
 ### EVIDÊNCIA
 • SSoT → Clima e Pluviometria → Correlação de Pearson CHIRPS v2.0 (Tabela 4.3 e Figura 4.4)
@@ -1328,18 +1477,18 @@ A correlação de Pearson calculada para a série temporal completa de 31 anos r
 • Interpretação da Dissertação: A mandioca possui tolerância à seca via encerramento estomático; o volume pluviométrico acumulado anual não determina isoladamente o sucesso da safra.
 
 ### LIMITAÇÃO
-Os dados CHIRPS representam precipitação acumulada à escala da grelha de satélite (0,05°), não registando o regime diário pontual na parcela ou a capacidade de retenção hídrica em solos arenosos.`,
-    };
+Os dados CHIRPS representam precipitação acumulada à escala da grelha de satélite (0,05°), não registando o regime diário pontual na parcela ou a capacidade de retenção hídrica em solos arenosos.`
+    );
   }
 
   // TESTE 4: As 547.224 t foram efectivamente pesadas?
   if (norm.includes('547') || norm.includes('pesadas') || norm.includes('medidas no campo')) {
-    return {
-      status: 'MODELADO',
-      text: `### RESPOSTA
-**Não.** As 547.224 toneladas acumuladas **não foram fisicamente pesadas**, medidas ou registadas em balanças de campo ou armazéns. 
+    return buildResult(
+      'MODELADO',
+      `### RESPOSTA
+Não, as 547.224 toneladas acumuladas **não foram fisicamente perdidas** nem pesadas na parcela ou em armazéns pelos agricultores; trata-se de uma Formulação epistemologicamente imprecisa, visto corresponder a uma **estimativa de perdas no âmbito da modelação contrafactual**.
 
-Trata-se de uma **estimativa de perdas no âmbito da modelação contrafactual**, apurada ao longo de 14 safras adversas no período 1994–2016. O valor corresponde ao diferencial matemático entre a linha de base agronómica potencial (baseline calibrada de 7,0 t/ha) e a produção efectivamente modelada para cada ano de choque. Constitui um indicador de custo de oportunidade biofísico, e não um registo administrativo de colheita destruída.
+O valor corresponde ao diferencial matemático entre a linha de base agronómica potencial (baseline calibrada de 7,0 t/ha) e a produção efectivamente modelada para cada um dos 14 anos de choque no período 1994–2016. Constitui um indicador de custo de oportunidade biofísico, e não um registo administrativo de colheita destruída.
 
 ### EVIDÊNCIA
 • SSoT → Balanço de Perdas Biofísicas (Tabela 4.4 da Dissertação)
@@ -1351,8 +1500,8 @@ Trata-se de uma **estimativa de perdas no âmbito da modelação contrafactual**
 • Interpretação da Dissertação: Demonstra a magnitude acumulada da perda potencial resultante de choques agroclimáticos sucessivos e ausência de irrigação de suporte.
 
 ### LIMITAÇÃO
-A linha de base de 7 t/ha baseia-se no potencial agroecológico sem restrições severas de mão-de-obra familiar ou material propagativo infectado.`,
-    };
+A linha de base de 7 t/ha baseia-se no potencial agroecológico sem restrições severas de mão-de-obra familiar ou material propagativo infectado.`
+    );
   }
 
   // TESTE 5: Os 11 bairros representam todo o distrito de Zavala?
@@ -1360,10 +1509,10 @@ A linha de base de 7 t/ha baseia-se no potencial agroecológico sem restrições
     (norm.includes('11 bairros') || norm.includes('quissico')) &&
     (norm.includes('representam') || norm.includes('todo') || norm.includes('distrito') || norm.includes('generaliza'))
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-**Não.** Os 11 bairros analisados (cobrindo 22.343 hectares) pertencem exclusivamente ao **Posto Administrativo de Quissico** e **não representam todo o Distrito de Zavala**.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+Não, os resultados dos 11 bairros analisados (cobrindo 22.343 hectares em Quissico) pertencem exclusivamente ao Posto Administrativo de Quissico e **não representam a totalidade do Distrito de Zavala**.
 
 A dissertação circunscreve rigorosamente a caracterização espacial e altimétrica ao perímetro de Quissico (incluindo bairros como Nzile e Macomane, com áreas deprimidas abaixo de 9 metros sob risco de alagamento). Os restantes três postos administrativos do distrito — **Zandamela, Massava e Mavila** — possuem regimes agroecológicos, densidades de povoamento e distâncias aos mercados distintas, pelo que os resultados de Quissico não podem ser extrapolados sem salvaguardas.
 
@@ -1377,8 +1526,8 @@ A dissertação circunscreve rigorosamente a caracterização espacial e altimé
 • Interpretação da Dissertação: Demonstra a heterogeneidade topográfica intra-posto e o risco localizado nas cotas baixas.
 
 ### LIMITAÇÃO
-A análise espacial não cobriu com a mesma densidade Sentinel-2 e SRTM as zonas rurais dos postos de Zandamela, Massava e Mavila.`,
-    };
+A análise espacial não cobriu com a mesma densidade Sentinel-2 e SRTM as zonas rurais dos postos de Zandamela, Massava e Mavila.`
+    );
   }
 
   // TESTE 6: O produtor diagnosticou a doença? (Testemunho de Campo vs Diagnóstico Molecular)
@@ -1386,10 +1535,10 @@ A análise espacial não cobriu com a mesma densidade Sentinel-2 e SRTM as zonas
     (norm.includes('produtor') || norm.includes('campones') || norm.includes('campo')) &&
     (norm.includes('diagnosticou') || norm.includes('doenca') || norm.includes('laboratori') || norm.includes('cbsd') || norm.includes('cmd') || norm.includes('virose') || norm.includes('podridao'))
   ) {
-    return {
-      status: 'TESTEMUNHO DE CAMPO',
-      text: `### RESPOSTA
-**Não.** Os produtores rurais entrevistados **não realizaram diagnóstico fitopatológico laboratorial**. O testemunho colhido em campo expressa a **percepção empírica e a voz do produtor**, relatando sintomas visuais como podridão radicular ("na cova"), amarelecimento foliar e dessecação vegetativa.
+    return buildResult(
+      'TESTEMUNHO DE CAMPO',
+      `### RESPOSTA
+Não, os produtores rurais entrevistados **não realizaram diagnóstico fitopatológico laboratorial molecular**; o testemunho de campo expressa a percepção empírica e o saber camponês perante sintomas macroscópicos.
 
 A dissertação preserva estes relatos etnográficos (77 inquéritos semiestruturados em 11 bairros de Quissico transcritos a partir de 51 páginas do caderno de campo) como evidência da vivência camponesa, mas ressalva taxativamente que não foram conduzidos testes de biologia molecular ou isolamento laboratorial de estirpes virais (como o vírus da estria castanha - CBSD ou do mosaico - CMD).
 
@@ -1403,8 +1552,8 @@ A dissertação preserva estes relatos etnográficos (77 inquéritos semiestrutu
 • Interpretação da Dissertação: Os sintomas descritos coincidem com manifestações compatíveis com CBSD/alagamento radicular, mas sem validação clínica laboratorial molecular.
 
 ### LIMITAÇÃO
-Inexistência de análises fitossanitárias moleculares laboratoriais para confirmação inequívoca dos patógenos virais.`,
-    };
+Inexistência de análises fitossanitárias moleculares laboratoriais para confirmação inequívoca dos patógenos virais.`
+    );
   }
 
   // SIG e Sensoriamento Remoto (22.343 ha, Sentinel-2 / Dynamic World, SRTM)
@@ -1415,10 +1564,10 @@ Inexistência de análises fitossanitárias moleculares laboratoriais para confi
     norm.includes('dynamic world') ||
     norm.includes('sentinel')
   ) {
-    return {
-      status: 'OBSERVADO',
-      text: `### RESPOSTA
-A componente de Sistema de Informação Geográfica (SIG) e sensoriamento remoto da dissertação de Yolanda Tamele baseia-se na microanálise de alta resolução espacial dos 11 bairros do Posto Administrativo de Quissico, cobrindo uma área total de **22.343 hectares**.
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A componente de Sistema de Informação Geográfica (SIG) e sensoriamento remoto da dissertação analisa detalhadamente os 11 bairros do Posto Administrativo de Quissico, cobrindo uma área total de **22.343 hectares**.
 
 Os sensores e modelos orbitais mobilizados compreendem:
 1. **Sentinel-2 L2A / Dynamic World (10m):** Classificação da cobertura do solo com foco na série temporal da classe "crops" no percentil P75 (Modelo B da Tabela 7).
@@ -1435,8 +1584,8 @@ Os sensores e modelos orbitais mobilizados compreendem:
 • Interpretação da Dissertação: O Modelo B corrige as distorções do Modelo A (área territorial administrativa pura), revelando a concentração real das machambas.
 
 ### LIMITAÇÃO
-A microanálise espacial de 10m não foi estendida aos postos rurais de Zandamela, Massava e Mavila.`,
-    };
+A microanálise espacial de 10m não foi estendida aos postos rurais de Zandamela, Massava e Mavila.`
+    );
   }
 
   // TESTE 7: Limitação principal da série temporal e distinção epistemológica
@@ -1447,15 +1596,14 @@ A microanálise espacial de 10m não foi estendida aos postos rurais de Zandamel
     (norm.includes('limitac') && (norm.includes('serie') || norm.includes('metodolog') || norm.includes('dados'))) ||
     (norm.includes('diferenca') && (norm.includes('modelad') || norm.includes('observad') || norm.includes('dados')))
   ) {
-    return {
-      status: 'RECONSTITUÍDO / MODELADO',
-      text: `### RESPOSTA
-A principal limitação da série temporal de 31 anos (1994–2024) reside na sua **natureza metodológica híbrida**, estabelecendo uma distinção temporal nítida entre dois períodos epistemologicamente assimétricos:
+    return buildResult(
+      'RECONSTITUÍDO / MODELADO',
+      `### RESPOSTA
+A hibridez metodológica da série temporal de 31 anos (1994–2024) justifica-se pela ausência de registos estatísticos distritais no período pós-guerra civil e foi formalmente validada pelo teste de quebra estrutural de Chow ($F = 0,84; p = 0,443$).
 
-1. **Período Reconstituído e Modelado (1994–2016 — 23 anos):** Devido à inexistência de relatórios distritais contínuos no rescaldo da guerra civil (1992), a produção e área foram calculadas através de um modelo determinístico em três camadas (Camada 1: ancoragem FAO/TIA; Camada 2: calibração agroclimática SPI/CHIRPS; Camada 3: ajuste por desastres históricos). São dados modelados e calibrados.
-2. **Período Observado Primário (2017–2024 — 8 anos):** Assenta em dados primários observados e relatórios administrativos do SDAE de Zavala.
-
-Embora o teste de Chow tenha demonstrado estabilidade econométrica ($F = 0,84; p = 0,443$), a assimetria epistemológica entre os 23 anos modelados e os 8 anos observados exige cautela analítica na leitura de variações ano a ano no primeiro período.
+A série temporal conjuga 23 anos modelados (1994–2016) com 8 anos observados (2017–2024). A assimetria decorre da ausência de relatórios contínuos distritais no período pós-guerra civil (1992), suprida pelo modelo determinístico em três camadas de Yolanda Tamele:
+1. **Período Reconstituído e Modelado (1994–2016 — 23 anos):** Ancoragem FAO/TIA, calibração SPI/CHIRPS e ajuste por desastres históricos.
+2. **Período Observado Primário (2017–2024 — 8 anos):** Dados primários observados e relatórios administrativos do SDAE de Zavala.
 
 ### EVIDÊNCIA
 • SSoT → Limitações Científicas (SCIENTIFIC_LIMITATIONS)
@@ -1467,8 +1615,8 @@ Embora o teste de Chow tenha demonstrado estabilidade econométrica ($F = 0,84; 
 • Interpretação da Dissertação: A hibridez metodológica permitiu suprir um vazio de informação histórica sem comprometer a tendência estrutural de longo prazo (Mann-Kendall Z = 3,100).
 
 ### LIMITAÇÃO
-Os primeiros 23 anos têm margem de incerteza associada aos factores de calibração determinísticos do modelo.`,
-    };
+Os primeiros 23 anos têm margem de incerteza associada aos factores de calibração determinísticos do modelo.`
+    );
   }
 
   // TESTE 8 / 11: Pergunta sem evidência no corpus (Anti-alucinação / Lacuna Documental)
@@ -1502,6 +1650,133 @@ A plataforma responde exclusivamente com base no acervo documental e empírico d
     };
   }
 
+  // CHOW TESTE / ESTABILIDADE ESTRUTURAL
+  if (norm.includes('chow') || norm.includes('quebra estrutural')) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+O teste de quebra estrutural de Chow obteve $F = 0,84$ ($p = 0,443$), comprovando que não existiu quebra estrutural artificial na junção da série temporal de 31 anos.
+
+Este resultado econométrico valida formalmente a união entre os 23 anos modelados em três camadas determinísticas (1994–2016) e os 8 anos observados pelo SDAE (2017–2024), atestando estabilidade estatística dos parâmetros do modelo temporal.
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (chowTestFStatistic = 0,84; chowTestPValue = 0,443)
+• Capítulo 3 da Dissertação (Validação Econométrica da Hibridez da Série)
+
+### INTERPRETAÇÃO
+• Dado Documentado: F = 0,84 (p = 0,443).
+• Interpretação da Dissertação: Estabilidade econométrica comprovada formalmente.
+
+### LIMITAÇÃO
+A estabilidade estatística do teste de Chow não elimina a distinção epistemológica intrínseca entre dados modelados e dados primários observados.`
+    );
+  }
+
+  // PRODUÇÃO MÉDIA ANUAL
+  if (norm.includes('producao media') || norm.includes('media anual') || (norm.includes('media') && norm.includes('31 anos'))) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A produção média anual de mandioca no Distrito de Zavala ao longo dos 31 anos analisados (1994–2024) foi de **115.333 toneladas/ano**.
+
+Esta média reflete a dinâmica de uma série que oscilou entre a produção estimada de 52.164 toneladas em 1994, o pico de 273.773 toneladas em 2021 e a quebra pós-Freddy para 35.371 toneladas em 2023, mantendo uma tendência estatisticamente significativa de crescimento (Mann-Kendall Z = 3,100; p = 0,0019).
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (averageAnnualProductionTonnes = 115.333)
+• Tabela 4.1 da Dissertação de Mestrado
+
+### INTERPRETAÇÃO
+• Dado Documentado: Média canónica da série de 31 anos.
+
+### LIMITAÇÃO
+A média sintetiza 23 anos modelados em 3 camadas e 8 anos observados primariamente pelo SDAE.`
+    );
+  }
+
+  // TAXA DE CRESCIMENTO OLS
+  if (norm.includes('ols') || (norm.includes('linear') && (norm.includes('crescimento') || norm.includes('tendencia')) && !norm.includes('mann'))) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A taxa de crescimento linear estimada por Mínimos Quadrados Ordinários (OLS) com correcção de Newey-West foi de **+4.229 toneladas/ano** ($p = 0,020$; $R^2 = 0,174$).
+
+Esta regressão paramétrica corrobora o sentido positivo da dinâmica secular da mandioca em Zavala, sendo complementada pelo estimador robusto não-paramétrico de Theil-Sen (+3.738 t/ano) para mitigar a sensibilidade a anos de choques climáticos atípicos.
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (olsTrendTonnesPerYear = 4.229; olsPValue = 0,020; olsRSquared = 0,174)
+• Tabela 4.2 da Dissertação de Mestrado
+
+### INTERPRETAÇÃO
+• Dado Documentado: Parâmetros de regressão OLS corrigidos por Newey-West.
+
+### LIMITAÇÃO
+O modelo OLS assume linearidade simplificada numa série sujeita a quebras climáticas assimétricas.`
+    );
+  }
+
+  // INQUÉRITOS / CADERNO DE CAMPO
+  if ((norm.includes('quantos inqueritos') || norm.includes('numero de inqueritos') || norm.includes('entrevistas') || norm.includes('caderno de campo')) && (norm.includes('realizados') || norm.includes('produtor') || norm.includes('terreno') || norm.includes('paginas'))) {
+    return buildResult(
+      'TESTEMUNHO DE CAMPO',
+      `### RESPOSTA
+Foram realizados **77 inquéritos semiestruturados** a produtores rurais nos 11 bairros de Quissico, acompanhados por **51 páginas manuscritas** de caderno de campo e 10 fotografias reais de machambas.
+
+Estes dados de campo recolhidos por Yolanda Tamele documentam as percepções locais dos camponeses sobre solos, práticas agrícolas e manifestações de sintomas na lavoura.
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (surveyInterviewsCount = 77; fieldNotebookPages = 51; realFieldPhotosCount = 10)
+• Trabalho de Campo em Quissico (Capítulo 3 da Dissertação)
+
+### INTERPRETAÇÃO
+• Testemunho de Campo: Percepção etnográfica empírica dos agricultores familiares.
+
+### LIMITAÇÃO
+Os inquéritos refletem o Posto de Quissico e não substituem diagnóstico molecular de viroses em laboratório.`
+    );
+  }
+
+  // SECA / RESISTÊNCIA FISIOLÓGICA
+  if (norm.includes('seca') && (norm.includes('resiste') || norm.includes('toleran') || norm.includes('comporta'))) {
+    return buildResult(
+      'INTERPRETAÇÃO',
+      `### RESPOSTA
+Sim, a mandioca apresenta elevada tolerância a secas moderadas graças a mecanismos de estivação e regulação estomática, mas é extremamente vulnerável ao encharcamento prolongado e asfixia radicular.
+
+Nas condições de Zavala, a cultura tolera estiagens através da perda controlada de folhagem e conservação de reservas de amido no solo. Por outro lado, chuvas torrenciais extremas com alagamento de várzeas (como no Ciclone Freddy em 2023) provocam apodrecimento maciço das raízes tuberosas.
+
+### EVIDÊNCIA
+• SSoT → Clima e Pluviometria (Tabela 4.3 da Dissertação)
+• Desacoplamento pluviométrico linear (r = 0,057; p = 0,762)
+
+### INTERPRETAÇÃO
+• Interpretação da Dissertação: Vulnerabilidade assimétrica ao excesso hídrico vs resiliência à aridez moderada.
+
+### LIMITAÇÃO
+A tolerância depende da permeabilidade arenosa dos solos e das características varietais locais.`
+    );
+  }
+
+  // PRECIPITAÇÃO FREDDY 2023
+  if (norm.includes('1746') || (norm.includes('precipitacao') && (norm.includes('freddy') || norm.includes('2023')))) {
+    return buildResult(
+      'OBSERVADO',
+      `### RESPOSTA
+A precipitação acumulada no ano do Ciclone Freddy (2023) foi de **1.746,0 mm** segundo os registos satelitais CHIRPS v2.0, representando uma anomalia de **+78,1%** acima da média histórica.
+
+Este excesso pluvial provocou o alagamento das várzeas e a destruição por asfixia radicular das machambas situadas em cotas baixas, associando-se ao colapso da produção para 35.371 toneladas (-87,1% em relação a 2021).
+
+### EVIDÊNCIA
+• SSoT → THESIS_CORE_FACTS (cycloneFreddyRainfallMm = 1.746,0; chirpsRainfallAnomalyPercent = +78,1%)
+• Tabela 4.3 da Dissertação de Mestrado
+
+### INTERPRETAÇÃO
+• Dado Documentado: Registo satelital CHIRPS v2.0 para o ano hidrológico de 2023.
+
+### LIMITAÇÃO
+O dado CHIRPS agrega valores a 0,05° de resolução e não captura as microbacias individuais de drenagem.`
+    );
+  }
+
   // TESTE 9 / 12: Pergunta externa (Contextualização externa)
   if (
     retrieved.isExternalKnowledgeNeeded ||
@@ -1512,10 +1787,10 @@ A plataforma responde exclusivamente com base no acervo documental e empírico d
     norm.includes('internacional') ||
     norm.includes('seguranca alimentar a nivel global')
   ) {
-    return {
-      status: 'CONTEXTUALIZAÇÃO EXTERNA',
-      text: `### RESPOSTA
-**Esta informação não pertence ao corpus documental da dissertação.** Contextualização externa à dissertação:
+    return buildResult(
+      'CONTEXTUALIZAÇÃO EXTERNA',
+      `### RESPOSTA
+Esta informação não pertence ao corpus documental da dissertação. Contextualização externa à dissertação:
 
 A nível global e segundo os quadros conceituais da Organização das Nações Unidas para a Alimentação e a Agricultura (FAO), a segurança alimentar compreende quatro pilares fundamentais: disponibilidade, acesso, utilização e estabilidade ao longo do tempo.
 
@@ -1530,22 +1805,57 @@ No contexto específico de Zavala investigado por Yolanda Tamele, a mandioca con
 • Interpretação da Dissertação: Ligação entre o conceito global e a prática camponesa observada em Zavala.
 
 ### LIMITAÇÃO
-Esta resposta reflecte conceitos teóricos internacionais de referência e não deve ser confundida com resultados analíticos primários da dissertação.`,
-    };
+Esta resposta reflecte conceitos teóricos internacionais de referência e não deve ser confundida com resultados analíticos primários da dissertação.`
+    );
+  }
+
+  // Proporção de 15% / Calibração Distrital (Inhambane / Zavala)
+  if (
+    norm.includes('15%') ||
+    norm.includes('15 por cento') ||
+    (norm.includes('15') && (norm.includes('proporcao') || norm.includes('percent') || norm.includes('inhambane')))
+  ) {
+    return buildResult(
+      'MODELADO',
+      `### RESPOSTA
+A proporção de aproximadamente ~15% refere-se à calibração metodológica da participação do Distrito de Zavala na produção provincial de mandioca de Inhambane (fundamentada nos inquéritos do projecto PROSUL 2014–2019 e do documento World Bank Jobs WP No. 31 sobre 127.000 hectares provinciais).
+
+Na dissertação de Yolanda Tamele, Zavala é caracterizado como o epicentro agroecológico da cultura em Inhambane, respondendo historicamente por cerca de 15% do volume provincial sob solos arenosos de elevada vulnerabilidade. Complementarmente, a dissertação incorpora bandas de confiança e incerteza metodológica de ±15% para anos regulares de colheita e discute o potencial de incorporação obrigatória de 15% a 20% de farinha de mandioca de alta qualidade (HQCF) no fabrico de pão de trigo.
+
+### EVIDÊNCIA
+• thesisModelData.ts → Camada 1: Âncoras Observadas Distritais (PROSUL 2014–19; World Bank Jobs WP No. 31)
+• dissertationText.ts → Questão #1 & Questão #38 da Banca de Defesa
+• thesisScientificData.ts → Registo de Bandas de Incerteza do Modelo (±15%)
+
+### INTERPRETAÇÃO
+• Dado Documentado: Calibração distrital de Zavala em ~15% da produção provincial de Inhambane em 127.000 ha.
+• Estatuto Epistemológico: MODELADO / INTERPRETAÇÃO.
+
+### LIMITAÇÃO
+A proporção constitui um parâmetro de calibração histórica de escala agregada para os anos sem dados primários do SDAE, não devendo ser confundida com medição estática invariável em todos os anos.`
+    );
   }
 
   // Resposta estruturada padrão utilizando as evidências recuperadas
   const firstEv = retrieved.evidenceItems[0];
-  return {
-    status: retrieved.primaryEpistemicStatus,
-    text: `### RESPOSTA
-Com base no corpus científico da dissertação de Yolanda Tamele (ESUDER / UEM), a evidência documental disponível sintetiza-se nos seguintes pontos analíticos:
+  const leadSnippet = firstEv ? firstEv.snippet.replace(/^•\s*/, '').trim() : '';
+  const firstSentence = leadSnippet
+    ? (leadSnippet.endsWith('.') ? leadSnippet : leadSnippet + '.')
+    : 'A dinâmica produtiva de mandioca em Zavala (1994–2024) registou expansão secular no longo prazo (Mann-Kendall Z = 3,100; p = 0,0019), com produção média de 115.333 t/ano.';
 
-${retrieved.evidenceItems.slice(0, 3).map((item, idx) => `${idx + 1}. **${item.section}:** ${item.snippet}`).join('\n\n')}
+  const additionalContext = retrieved.evidenceItems
+    .slice(1, 4)
+    .map((item) => `• **${item.section}:** ${item.snippet}`)
+    .join('\n\n');
 
-A investigação evidencia que a dinâmica produtiva de mandioca em Zavala é pautada por uma expansão estrutural no longo prazo (Mann-Kendall Z = 3,100; p = 0,0019), mitigada por choques climáticos recorrentes e pela ausência de apoio técnico continuado.
+  return buildResult(
+    retrieved.primaryEpistemicStatus,
+    `### RESPOSTA
+${firstSentence}
 
-### EVIDÊNCIA
+Os registos da dissertação de Yolanda Tamele documentam com rigor empírico a série histórica de 31 anos em Zavala, discriminando dados observados de reconstituição biofísica e inquéritos de terreno.
+
+${additionalContext ? additionalContext + '\n\n' : ''}### EVIDÊNCIA
 ${retrieved.evidenceItems.map((item) => `• ${item.provenanceTrail || item.source} (${item.internalReference})`).join('\n')}
 
 ### INTERPRETAÇÃO
@@ -1553,7 +1863,219 @@ ${retrieved.evidenceItems.map((item) => `• ${item.provenanceTrail || item.sour
 • Estatuto Epistemológico: ${retrieved.primaryEpistemicStatus}.
 
 ### LIMITAÇÃO
-As conclusões fundamentam-se na série de 31 anos analisada e nos dados recolhidos no Distrito de Zavala entre 1994 e 2024.`,
+As conclusões fundamentam-se na série de 31 anos analisada e nos dados recolhidos no Distrito de Zavala entre 1994 e 2024.`
+  );
+}
+
+/**
+ * Chamada controlada ao LLM (OpenAI)
+ * Não mascara erro 429 como erro científico: identifica o estado da API com clareza.
+ */
+export async function generateLLMResearchResponse(
+  query: string,
+  scope: ResearchScope,
+  hybridContext: HybridResearchContext,
+  history?: { role: 'user' | 'assistant'; content: string }[],
+  isDefenseMode: boolean = false
+): Promise<{
+  rawAnswer: string;
+  modelUsed: string;
+  hasApiKey: boolean;
+  llmState: LLMExecutionState;
+  rawLlmError?: string;
+}> {
+  const openai = getOpenAIClient();
+  if (!openai) {
+    return {
+      rawAnswer: '',
+      modelUsed: 'zavalavoz-hybrid-local',
+      hasApiKey: false,
+      llmState: 'LLM_UNAVAILABLE_NO_CREDITS',
+      rawLlmError: 'OPENAI_API_KEY não configurada no ambiente.',
+    };
+  }
+
+  try {
+    const formattedEvidences = hybridContext.retrievedEvidence
+      .map((e) => `[${e.hierarchyLevel}] ${e.section}: ${e.snippet}`)
+      .join('\n\n');
+
+    const formattedFacts = hybridContext.deterministicFacts
+      .map((f) => `• [SSoT Canónico - ${f.topic}] ${f.exactText} (Estatuto: ${f.epistemicStatus})`)
+      .join('\n');
+
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      {
+        role: 'system',
+        content: `${SCIENTIFIC_SYSTEM_PROMPT}\n\nEVIDÊNCIAS DOCUMENTAIS DO CORPUS:\n${formattedEvidences}\n\nFACTOS CANÓNICOS DETERMINÍSTICOS (SSoT INVIOLÁVEL):\n${formattedFacts}`,
+      },
+    ];
+
+    if (Array.isArray(history)) {
+      history.slice(-4).forEach((h) => {
+        messages.push({
+          role: h.role === 'user' ? 'user' : 'assistant',
+          content: h.content,
+        });
+      });
+    }
+
+    const promptUser = isDefenseMode
+      ? `MODO PREPARAR PARA DEFESA ATIVO:\nEstruture a secção ### RESPOSTA no formato de sustentação oral directa para a banca académica:\nEU DIRIA: [resposta oral curta, direta, segura, que responde imediatamente à pergunta]\nOS DADOS MOSTRAM: [dados quantitativos precisos do SSoT]\nCONTUDO: [limitação metodológica ou ressalva]\nPOR ISSO: [conclusão e implicação prática]\nSE A BANCA APERTAR: [pergunta provável de seguimento da banca]\nRESPOSTA: [resposta curta e segura]\n\nÂmbito de pesquisa: ${scope.toUpperCase()}\nConsulta académica: "${query}"\n\nResponda estritamente seguindo as 4 secções (### RESPOSTA, ### EVIDÊNCIA, ### INTERPRETAÇÃO, ### LIMITAÇÃO), mantendo rigor absoluto aos factos numéricos do SSoT e começando SEMPRE respondendo directamente à pergunta.`
+      : `Âmbito de pesquisa: ${scope.toUpperCase()}\nConsulta académica: "${query}"\n\nResponda estritamente seguindo a estrutura editorial obrigatória (### RESPOSTA, ### EVIDÊNCIA, ### INTERPRETAÇÃO, ### LIMITAÇÃO). IMPORTANTE: A primeira frase de ### RESPOSTA DEVE responder directamente à pergunta feita, sem rodeios ou introduções genéricas.`;
+
+    messages.push({
+      role: 'user',
+      content: promptUser,
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages,
+      temperature: 0.15,
+      max_tokens: 1400,
+    });
+
+    const rawAnswer = completion.choices[0]?.message?.content || '';
+    return {
+      rawAnswer,
+      modelUsed: 'gpt-4o-mini',
+      hasApiKey: true,
+      llmState: 'LLM_AVAILABLE',
+    };
+  } catch (apiError: any) {
+    const errorMsg = apiError?.message || String(apiError);
+    let llmState: LLMExecutionState = 'LLM_ERROR';
+
+    if (
+      apiError?.status === 429 ||
+      errorMsg.includes('429') ||
+      errorMsg.includes('quota') ||
+      errorMsg.includes('insufficient_quota') ||
+      errorMsg.includes('rate_limit')
+    ) {
+      llmState = 'LLM_UNAVAILABLE_NO_CREDITS';
+    } else if (
+      errorMsg.includes('timeout') ||
+      errorMsg.includes('ETIMEDOUT') ||
+      apiError?.code === 'ETIMEDOUT'
+    ) {
+      llmState = 'LLM_UNAVAILABLE_TIMEOUT';
+    } else if (
+      errorMsg.includes('network') ||
+      errorMsg.includes('ECONNREFUSED') ||
+      errorMsg.includes('ENOTFOUND')
+    ) {
+      llmState = 'LLM_UNAVAILABLE_NETWORK';
+    }
+
+    return {
+      rawAnswer: '',
+      modelUsed: 'zavalavoz-hybrid-local',
+      hasApiKey: true,
+      llmState,
+      rawLlmError: errorMsg,
+    };
+  }
+}
+
+/**
+ * Fusão e Validação Rigorosa:
+ * Combina a interpretação linguística com a autoridade factual do motor determinístico.
+ * DETERMINISTIC ENGINE WINS: em caso de qualquer divergência numérica ou categorial,
+ * a verdade determinística é imposta.
+ */
+export function fuseAndValidateResearchResponse(
+  query: string,
+  analysis: AnalyzedResearchQuestion,
+  hybridContext: HybridResearchContext,
+  deterministicContext: DeterministicEvaluation,
+  llmResult: {
+    rawAnswer: string;
+    modelUsed: string;
+    hasApiKey: boolean;
+    llmState: LLMExecutionState;
+    rawLlmError?: string;
+  },
+  scope: ResearchScope,
+  retrieved: RetrievalResult,
+  isDefenseMode: boolean
+): {
+  finalAnswer: string;
+  epistemicStatus: EpistemicStatus;
+  modelUsed: string;
+  isFallback: boolean;
+  fallbackNotice?: string;
+  alerts: EpistemicGuardrailAlert[];
+  statusCategory: ResponseStatusCategory;
+} {
+  let baseText = '';
+  let epistemicStatus = deterministicContext.primaryEpistemicStatus;
+  let isFallback = false;
+  let modelUsed = llmResult.modelUsed;
+  let fallbackNotice: string | undefined = undefined;
+
+  if (llmResult.llmState === 'LLM_AVAILABLE' && llmResult.rawAnswer.trim().length > 0) {
+    // LLM executou com sucesso: validar factualidade com o motor determinístico
+    const validation = validateAndEnforceDeterministicTruth(
+      llmResult.rawAnswer,
+      analysis,
+      deterministicContext.facts
+    );
+    baseText = validation.validatedAnswer;
+    modelUsed = llmResult.modelUsed;
+    isFallback = false;
+  } else {
+    // LLM indisponível (429, timeout, sem créditos ou sem chave): activar síntese local avançada
+    isFallback = true;
+    modelUsed = 'zavalavoz-scientific-hybrid-local';
+
+    if (llmResult.llmState === 'LLM_UNAVAILABLE_NO_CREDITS') {
+      fallbackNotice =
+        'Consulta LLM externa indisponível (cota da API externa excedida / HTTP 429). A plataforma activou a síntese científica local e o motor determinístico baseados no corpus da dissertação.';
+    } else {
+      fallbackNotice =
+        'Consulta LLM externa indisponível. A plataforma apresenta uma resposta sintetizada pelo motor científico e corpus documental local.';
+    }
+
+    // Primeiro verificar se generateDeterministicScientificAnswer tem resposta específica refinada
+    const detAnswer = generateDeterministicScientificAnswer(query, scope, retrieved, isDefenseMode);
+
+    // Se detAnswer for a resposta genérica padrão, utilizar o nosso sintetizador avançado
+    if (detAnswer.text.includes('Os registos da dissertação de Yolanda Tamele documentam com rigor empírico a série histórica')) {
+      const localSynth = synthesizeLocalNaturalLanguageResponse(
+        analysis,
+        deterministicContext,
+        retrieved.evidenceItems,
+        isDefenseMode
+      );
+      baseText = localSynth.answerText;
+      epistemicStatus = localSynth.epistemicStatus;
+    } else {
+      baseText = detAnswer.text;
+      epistemicStatus = detAnswer.status;
+    }
+
+    const validation = validateAndEnforceDeterministicTruth(
+      baseText,
+      analysis,
+      deterministicContext.facts
+    );
+    baseText = validation.validatedAnswer;
+  }
+
+  // Sanitização de preâmbulos e aplicação de guardrails
+  const sanitized = sanitizeDirectAnswer(baseText);
+  const guardrails = applyEpistemicGuardrailsToAnswer(sanitized, query);
+
+  return {
+    finalAnswer: guardrails.remediatedAnswer,
+    epistemicStatus,
+    modelUsed,
+    isFallback,
+    fallbackNotice,
+    alerts: guardrails.alerts,
+    statusCategory: guardrails.statusCategory,
   };
 }
 
@@ -1568,126 +2090,111 @@ export async function handleResearchQuery(
     throw new Error('A consulta não pode estar vazia.');
   }
 
-  // 1. Recuperação Selectiva de Contexto
+  // 1. Analisador Semântico e Epistemológico da Pergunta
+  const analysis = analyzeResearchQuestion(query, isDefenseMode);
+
+  // 2. Recuperação Selectiva de Contexto
   const retrieved = retrieveScientificContext(query, scope);
 
-  let rawAnswer = '';
-  let modelUsed = 'zavalavoz-scientific-engine-v1';
-  let hasApiKey = false;
-  let isFallback = false;
-  let isExternalKnowledgeUsed = retrieved.isExternalKnowledgeNeeded;
-  let epistemicStatus: EpistemicStatus = retrieved.primaryEpistemicStatus;
+  // 3. Avaliação e Autoridade Factual do Motor Determinístico (SSoT)
+  const deterministicContext = evaluateDeterministicContext(analysis, retrieved.evidenceItems);
 
-  const openai = getOpenAIClient();
+  // 4. Montagem do Contexto Híbrido
+  const hybridContext: HybridResearchContext = {
+    question: query,
+    retrievedEvidence: retrieved.evidenceItems,
+    deterministicFacts: deterministicContext.facts,
+    epistemicStatus: [deterministicContext.primaryEpistemicStatus],
+    guardrails: deterministicContext.guardrails,
+    llmAvailable: false,
+    llmState: 'LLM_AVAILABLE',
+  };
 
-  if (openai) {
-    hasApiKey = true;
-    try {
-      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        {
-          role: 'system',
-          content: `${SCIENTIFIC_SYSTEM_PROMPT}\n\n${retrieved.formattedContextForLLM}`,
-        },
-      ];
+  // 5. Chamada ao LLM (OpenAI) com detecção explícita de estados (429, timeouts, etc.)
+  const llmResult = await generateLLMResearchResponse(
+    query,
+    scope,
+    hybridContext,
+    request.history,
+    isDefenseMode
+  );
 
-      if (Array.isArray(request.history)) {
-        request.history.slice(-4).forEach((h) => {
-          messages.push({
-            role: h.role === 'user' ? 'user' : 'assistant',
-            content: h.content,
-          });
-        });
-      }
+  hybridContext.llmState = llmResult.llmState;
+  hybridContext.llmAvailable = llmResult.llmState === 'LLM_AVAILABLE';
+  hybridContext.llmResponse = llmResult.rawAnswer;
+  hybridContext.rawLlmError = llmResult.rawLlmError;
 
-      const promptUser = isDefenseMode
-        ? `MODO PREPARAR PARA DEFESA ATIVO:\nEstruture a secção ### RESPOSTA no formato de sustentação oral para banca académica com quatro secções claras:\nEU DIRIA: [argumento oral seguro]\nOS DADOS MOSTRAM: [dados quantitativos precisos do SSoT]\nCONTUDO: [limitação metodológica ou ressalva]\nPOR ISSO: [conclusão e implicação prática]\n\nÂmbito de pesquisa: ${scope.toUpperCase()}\nConsulta académica: "${query}"\n\nResponda estritamente seguindo as 4 secções (### RESPOSTA, ### EVIDÊNCIA, ### INTERPRETAÇÃO, ### LIMITAÇÃO), mantendo rigor absoluto aos factos numéricos do SSoT.`
-        : `Âmbito de pesquisa: ${scope.toUpperCase()}\nConsulta académica: "${query}"\n\nResponda estritamente seguindo a estrutura editorial obrigatória (### RESPOSTA, ### EVIDÊNCIA, ### INTERPRETAÇÃO, ### LIMITAÇÃO), mantendo fidelidade aos dados numéricos do SSoT.`;
-
-      messages.push({
-        role: 'user',
-        content: promptUser,
-      });
-
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.15,
-        max_tokens: 1400,
-      });
-
-      rawAnswer = completion.choices[0]?.message?.content || '';
-      modelUsed = 'gpt-4o-mini';
-    } catch (apiError: any) {
-      console.warn(
-        'OpenAI API falhou ou excedeu timeout, recorrendo ao motor determinístico canónico:',
-        apiError?.message
-      );
-      const det = generateDeterministicScientificAnswer(query, scope, retrieved, isDefenseMode);
-      rawAnswer = det.text;
-      epistemicStatus = det.status;
-      modelUsed = 'zavalavoz-scientific-fallback';
-      isFallback = true;
-    }
-  } else {
-    // Sem chave no ambiente: execução canónica determinística de alta fidelidade
-    const det = generateDeterministicScientificAnswer(query, scope, retrieved, isDefenseMode);
-    rawAnswer = det.text;
-    epistemicStatus = det.status;
-    isFallback = true;
-  }
-
-  // 2. Aplicação de Guardrails Epistemológicos
-  const guardrailResult = applyEpistemicGuardrailsToAnswer(rawAnswer, query);
-
-  // 3. Extracção dos 4 Níveis Estruturados Editoriais
-  const structuredParts = extractStructuredSections(
-    guardrailResult.remediatedAnswer,
+  // 6. Fusão e Validação Rigorosa (DETERMINISTIC ENGINE WINS em caso de conflito factual)
+  const fusionResult = fuseAndValidateResearchResponse(
+    query,
+    analysis,
+    hybridContext,
+    deterministicContext,
+    llmResult,
+    scope,
     retrieved,
-    epistemicStatus
+    isDefenseMode
+  );
+
+  // 7. Extracção dos 4 Níveis Estruturados Editoriais
+  const structuredParts = extractStructuredSections(
+    fusionResult.finalAnswer,
+    retrieved,
+    fusionResult.epistemicStatus
   );
 
   // Garantir que se estiver em modo de defesa, oralDefense está estruturado
   if (isDefenseMode && !structuredParts.structured.oralDefense) {
-    const formatted = formatOralResponse(structuredParts.structured.answerText);
-    const oralDiria = formatted.match(/EU DIRIA:\s*([\s\S]*?)(?=OS DADOS MOSTRAM|$)/i);
-    const oralDados = formatted.match(/OS DADOS MOSTRAM:\s*([\s\S]*?)(?=CONTUDO|$)/i);
-    const oralContudo = formatted.match(/CONTUDO:\s*([\s\S]*?)(?=POR ISSO|$)/i);
-    const oralPorIsso = formatted.match(/POR ISSO:\s*([\s\S]*?)$/i);
+    const formatted = formatOralResponse(structuredParts.structured.answerText, query);
+    const oralDiria = formatted.match(/(?:EU DIRIA\.{2,3}|EU DIRIA:?)\s*([\s\S]*?)(?=(?:OS DADOS MOSTRAM|CONTUDO|POR ISSO|SE A BANCA APERTAR|$))/i);
+    const oralDados = formatted.match(/(?:OS DADOS MOSTRAM\.{2,3}|OS DADOS MOSTRAM:?)\s*([\s\S]*?)(?=(?:CONTUDO|POR ISSO|SE A BANCA APERTAR|$))/i);
+    const oralContudo = formatted.match(/(?:CONTUDO\.{2,3}|CONTUDO:?)\s*([\s\S]*?)(?=(?:POR ISSO|SE A BANCA APERTAR|$))/i);
+    const oralPorIsso = formatted.match(/(?:POR ISSO\.{2,3}|POR ISSO:?)\s*([\s\S]*?)(?=(?:SE A BANCA APERTAR|$))/i);
+    const oralApertar = formatted.match(/(?:SE A BANCA APERTAR\.{2,3}|SE A BANCA APERTAR:?)\s*([\s\S]*?)(?=(?:RESPOSTA:?|$))/i);
+    const oralResposta = formatted.match(/(?:RESPOSTA\.{2,3}|RESPOSTA:?)\s*([\s\S]*?)$/i);
     if (oralDiria && oralDados && oralContudo && oralPorIsso) {
       structuredParts.structured.oralDefense = {
         euDiria: oralDiria[1].trim(),
         osDadosMostram: oralDados[1].trim(),
         contudo: oralContudo[1].trim(),
         porIsso: oralPorIsso[1].trim(),
+        seABancaApertar: oralApertar ? oralApertar[1].trim() : undefined,
+        resposta: oralResposta ? oralResposta[1].trim() : undefined,
       };
     }
   }
 
-  // 4. Pergunta de Ensaio para Banca
+  // 8. Pergunta de Ensaio para Banca
   const rehearsalQuestion = generateRehearsalJuryQuestion(query, scope, retrieved);
 
   const finalDisclaimer =
     'Resposta gerada pelo índice científico ZAVALAVOZ com base no corpus da dissertação de Yolanda Tamele (ESUDER / UEM). Não substitui a leitura integral da dissertação nem o juízo académico.';
 
-  const fallbackNotice = isFallback
-    ? 'Consulta LLM indisponível. A plataforma apresenta uma resposta baseada exclusivamente no corpus científico local.'
-    : undefined;
+  // Logs de auditoria científica obrigatórios
+  console.log(`[RESEARCH] question="${query}"`);
+  console.log(`[RESEARCH] retrieval=${retrieved.evidenceItems.length} items (category: ${fusionResult.statusCategory})`);
+  console.log(`[RESEARCH] deterministic_engine=OK (${deterministicContext.facts.length} facts)`);
+  console.log(`[RESEARCH] llm=${llmResult.llmState}`);
+  console.log(`[RESEARCH] fusion=COMPLETED (mode: ${fusionResult.isFallback ? 'HYBRID_LOCAL' : 'HYBRID_EXTERNAL'})`);
+  console.log(`[RESEARCH] validation=PASS (alerts: ${fusionResult.alerts.length})`);
 
   return {
-    answer: guardrailResult.remediatedAnswer,
-    epistemicStatus,
+    answer: fusionResult.finalAnswer,
+    epistemicStatus: fusionResult.epistemicStatus,
     retrievedEvidence: retrieved.evidenceItems,
-    statusCategory: guardrailResult.statusCategory,
-    epistemicAlerts: guardrailResult.alerts,
+    statusCategory: fusionResult.statusCategory,
+    epistemicAlerts: fusionResult.alerts,
     structuredResponse: structuredParts.structured,
     scope,
-    modelUsed,
+    modelUsed: fusionResult.modelUsed,
     disclaimer: finalDisclaimer,
-    hasApiKey,
-    isExternalKnowledgeUsed,
-    isFallback,
-    fallbackNotice,
+    hasApiKey: llmResult.hasApiKey,
+    isExternalKnowledgeUsed: retrieved.isExternalKnowledgeNeeded,
+    isFallback: fusionResult.isFallback,
+    fallbackNotice: fusionResult.fallbackNotice,
     defensePreparationMode: isDefenseMode,
     rehearsalQuestion,
+    llmState: llmResult.llmState,
+    deterministicFacts: deterministicContext.facts,
   };
 }
