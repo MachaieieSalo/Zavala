@@ -150,6 +150,15 @@ export interface AnalyzedResearchQuestion {
   isExternalTopic: boolean;
   isDataGapTopic: boolean;
   isDefenseMode: boolean;
+  targetClaim?: string;
+  answerType?: 'YES_NO' | 'VALUE' | 'DEFINITION' | 'EXPLANATION' | 'METHODOLOGY' | 'OUT_OF_CORPUS' | 'EXTERNAL';
+  isNegativeExpected?: boolean;
+  isDefinitionExpected?: boolean;
+  isRainfallCausalityQuestion?: boolean;
+  is11BairrosQuestion?: boolean;
+  is547kLossesQuestion?: boolean;
+  isAllObservedQuestion?: boolean;
+  isFarmerTestimonyQuestion?: boolean;
 }
 
 export interface CanonicalFact {
